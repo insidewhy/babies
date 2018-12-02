@@ -44,21 +44,20 @@ def watch_video(video):
 def create_show_db(dirpath):
     print('TODO: create series db in', dirpath)
 
-def convert_show_db(dirpath):
+def convert_show_db(dirpath, force):
     db = Db()
+    if not force and os.path.isfile(db.get_series_db_path(dirpath)):
+        raise ValueError('new database already exists')
+
     new_filepath = db.get_series_db_path(dirpath)
-    try:
-        if os.path.isfile(new_filepath):
-            raise ValueError('new database already exists in this directory')
-        db.load_series_v0(dirpath)
-        db.write_series(dirpath)
-    except ValueError as err:
-        print(err.args[0])
+    db.load_series_v0(dirpath)
+    db.write_series(dirpath)
 
 def main():
     parser = argparse.ArgumentParser(description='enjoy your videos')
     parser.add_argument('-c', '--create', action='store_true', help='create series database for videos in current directory')
     parser.add_argument('-C', '--convert', action='store_true', help='convert series database to new version')
+    parser.add_argument('-f', '--force', action='store_true', help='force overwrite etc.')
     parser.add_argument('videos', help='videos or directories containing videos', nargs='*')
     args = parser.parse_args()
 
@@ -71,11 +70,14 @@ def main():
             create_show_db(video)
     elif args.convert:
         for video in get_dir_or_videos():
-            convert_show_db(video)
+            convert_show_db(video, args.force)
     elif not args.videos:
         print('TODO: look for video to watch in current directory')
     else:
         for video in args.videos:
             watch_video(video)
 
-main()
+try:
+    main()
+except ValueError as err:
+    print(err.args[0])
