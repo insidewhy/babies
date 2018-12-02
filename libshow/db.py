@@ -1,17 +1,21 @@
-import yaml
+from ruamel.yaml import YAML
 import os
+
+yaml = YAML(typ='safe')
+yaml.default_flow_style = False
+yaml.sort_base_mapping_type_on_output = False
 
 def __load_yaml_file(filepath):
     with open(filepath, 'r') as stream:
         try:
-            return yaml.safe_load(stream)
+            return yaml.load(stream)
         except yaml.YAMLError as err:
             raise ValueError(*err.args)
 
 def dump_yaml_file(filepath, data):
     with open(filepath, 'w') as stream:
         try:
-            return yaml.safe_dump(data, stream, default_flow_style=False)
+            return yaml.dump(data, stream)
         except yaml.YAMLError as err:
             raise ValueError(*err.args)
 
