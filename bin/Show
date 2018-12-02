@@ -41,8 +41,25 @@ def watch_video(video):
     player.wait_for_playback()
     print('TODO: update main database (and the series db if video was part of a series)')
 
-def create_show_db(dirpath):
-    print('TODO: create series db in', dirpath)
+def is_video(path):
+    for suffix in SHOW_EXTENSIONS:
+        if path.endswith(suffix):
+            return True
+    return False
+
+def create_show_db(dirpath, force):
+    db = Db()
+
+    # TODO: merge new content with old content instead
+    if not force and os.path.isfile(db.get_series_db_path(dirpath)):
+        raise ValueError('new database already exists')
+
+    for filename in sorted(os.listdir(dirpath)):
+        if is_video(filename):
+            db.add_show_to_series(filename)
+
+    db.write_series(dirpath)
+
 
 def convert_show_db(dirpath, force):
     db = Db()
@@ -67,7 +84,7 @@ def main():
 
     if args.create:
         for video in get_dir_or_videos():
-            create_show_db(video)
+            create_show_db(video, args.force)
     elif args.convert:
         for video in get_dir_or_videos():
             convert_show_db(video, args.force)

@@ -39,13 +39,16 @@ class Db:
                     start = 'unknown'
                     space_idx = line.index(' ')
                     if line[1] != ' ':
-                        start = line[1:space_idx].replace('-', '/').replace('~', ' ') + ' at 00:00'
+                        start = line[1:space_idx].replace('-', '/').replace('~', ' ')
                     video_file = line[space_idx + 1:]
                     video_data['video'] = video_file
                     video_data['viewings'] = [ { 'start': start, 'end': 'finished?' } ]
                 else:
                     video_data['video'] = line
-                self.__series_db.append(video_data)
+                self.add_show_to_series(video_data)
+
+    def add_show_to_series(self, video_data):
+        self.__series_db.append(video_data)
 
     def write_series(self, dirpath):
         filepath = self.get_series_db_path(dirpath)
