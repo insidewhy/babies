@@ -2,24 +2,80 @@
 
 import mpv
 import sys
+import argparse
+import os
+
 from libshow.db import Db
 
+SHOW_EXTENSIONS = [
+    'mkv',
+    'avi',
+    'mpg',
+    'mp4',
+    'mpeg',
+    'ogv',
+    'wmv',
+    'flv',
+    'm4v',
+    'iso',
+    'mov'
+]
 
 def log_mpv(loglevel, component, message):
     print('[{}] {}: {}'.format(loglevel, component, message))
 
-player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True)
-player.fullscreen = True
+def watch_video(video):
+    player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True)
+    player.fullscreen = True
 
-@player.on_key_press('q')
-def quit_binding():
-    print('TODO: save watching time etc.')
-    player.quit()
 
-video_file = sys.argv[1]
-db = Db()
-db.load_series(video_file)
+    @player.on_key_press('q')
+    def quit_binding():
+        print('TODO: user quit so record end time')
+        player.quit()
 
-player.play(video_file)
-player.wait_for_playback()
+    db = Db()
+    db.load_series(os.path.dirname(video))
 
+    player.play(video)
+    player.wait_for_playback()
+    print('TODO: update main database (and the series db if video was part of a series)')
+
+def create_show_db(dirpath):
+    print('TODO: create series db in', dirpath)
+
+def convert_show_db(dirpath):
+    db = Db()
+    new_filepath = db.get_series_db_path(dirpath)
+    try:
+        if os.path.isfile(new_filepath):
+            raise ValueError('new database already exists in this directory')
+        db.load_series_v0(dirpath)
+        db.write_series(dirpath)
+    except ValueError as err:
+        print(err.args[0])
+
+def main():
+    parser = argparse.ArgumentParser(description='enjoy your videos')
+    parser.add_argument('-c', '--create', action='store_true', help='create series database for videos in current directory')
+    parser.add_argument('-C', '--convert', action='store_true', help='convert series database to new version')
+    parser.add_argument('videos', help='videos or directories containing videos', nargs='*')
+    args = parser.parse_args()
+
+    def get_dir_or_videos():
+        videos = args.videos
+        return [ os.getcwd() ] if not videos else videos
+
+    if args.create:
+        for video in get_dir_or_videos():
+            create_show_db(video)
+    elif args.convert:
+        for video in get_dir_or_videos():
+            convert_show_db(video)
+    elif not args.videos:
+        print('TODO: look for video to watch in current directory')
+    else:
+        for video in args.videos:
+            watch_video(video)
+
+main()
