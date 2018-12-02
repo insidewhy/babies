@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+import mpv
+import sys
+from libshow.db import Db
+
+
+def log_mpv(loglevel, component, message):
+    print('[{}] {}: {}'.format(loglevel, component, message))
+
+player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True)
+player.fullscreen = True
+
+@player.on_key_press('q')
+def quit_binding():
+    print('TODO: save watching time etc.')
+    player.quit()
+
+video_file = sys.argv[1]
+db = Db()
+db.load_series(video_file)
+
+player.play(video_file)
+player.wait_for_playback()
+
