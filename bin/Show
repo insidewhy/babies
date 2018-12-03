@@ -4,6 +4,7 @@ import mpv
 import sys
 import argparse
 import os
+from types import SimpleNamespace
 
 from libshow.db import Db
 
@@ -25,25 +26,38 @@ def log_mpv(loglevel, component, message):
     print('[{}] {}: {}'.format(loglevel, component, message))
 
 def watch_video(video):
-    player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True)
-    player.fullscreen = True
+    player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True, fullscreen=True)
 
+    session = SimpleNamespace(position=None)
 
     @player.on_key_press('q')
     def quit_binding():
-        print('TODO: user quit so record end time')
+        session.position = player.time_pos
         player.quit()
 
     db = Db()
     db.load_series(os.path.dirname(video))
 
     player.play(video)
+
+    # get duration of video
+    def set_duration(x):
+        if x:
+            session.duration = x
+            return True
+    player.wait_for_property('duration', set_duration, False)
+
+    # wait for video to end
     player.wait_for_playback()
-    print('TODO: update main database (and the series db if video was part of a series)')
+
+    if session.position is None:
+        session.position = session.duration
+
+    print('TODO: update databases, position=', session.position, 'duration=', session.duration)
 
 def is_video(path):
     for suffix in SHOW_EXTENSIONS:
-        if path.endswith(suffix):
+        if path.endswith('.' + suffix):
             return True
     return False
 
