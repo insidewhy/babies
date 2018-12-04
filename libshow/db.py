@@ -50,7 +50,15 @@ class Db:
 
     def get_next_in_series(self):
         for show in self.__series_db:
-            if not show.get('viewings', None):
+            viewings = show.get('viewings', None)
+            if viewings is None:
+                return show
+
+            # get duration component of end field
+            final_viewing = viewings[-1]['end'].split(' at ')[1]
+
+            # if the final viewing didn't complete the show then it is next
+            if final_viewing != 'finished?' and final_viewing != show.get('duration', None):
                 return show
 
         return None

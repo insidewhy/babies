@@ -25,6 +25,23 @@ SHOW_EXTENSIONS = [
 def log_mpv(loglevel, component, message):
     print('[{}] {}: {}'.format(loglevel, component, message))
 
+"""If path is a directory then load series into db and return next unwatched show else return path to file"""
+def path_to_video(db, path):
+    if os.path.isdir(path):
+        db.load_series(path)
+        video_entry = db.get_next_in_series()
+        if not video_entry:
+            raise ValueError('series is complete')
+        video_path = os.path.join(path, video_entry['video'])
+        return video_path, video_entry
+    else:
+        return path, None
+
+def display_video(path):
+    db = Db()
+    video_path, _ = path_to_video(db, path)
+    print(os.path.basename(video_path))
+
 def watch_video(path):
     player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True, fullscreen=True)
 
@@ -36,15 +53,7 @@ def watch_video(path):
         player.quit()
 
     db = Db()
-    video_path = path
-    video_entry = None
-
-    if os.path.isdir(video_path):
-        db.load_series(path)
-        video_entry = db.get_next_in_series()
-        if not video_entry:
-            raise ValueError('series is complete')
-        video_path = os.path.join(path, video_entry['video'])
+    video_path, video_entry = path_to_video(db, path)
 
     player.play(video_path)
 
@@ -62,8 +71,9 @@ def watch_video(path):
         session.position = session.duration
 
     if video_entry:
-        video_entry['duration'] = session.duration
-        # TODO: add the viewing
+        # TODO: format duration as 00:00:00
+        video_entry['duration'] = str(session.duration)
+        print('recording watched video:', video_entry['video'])
         db.write_series(path)
 
 def is_video(path):
@@ -100,6 +110,7 @@ def main():
     parser.add_argument('-c', '--create', action='store_true', help='create series database for videos in current directory')
     parser.add_argument('-C', '--convert', action='store_true', help='convert series database to new version')
     parser.add_argument('-f', '--force', action='store_true', help='force overwrite etc.')
+    parser.add_argument('-p', '--print', action='store_true', help='display video(s) that would be played')
     parser.add_argument('paths', help='paths to videos or series directories', nargs='*')
     args = parser.parse_args()
 
@@ -113,6 +124,9 @@ def main():
     elif args.convert:
         for path in get_cwd_or_paths():
             convert_show_db(path, args.force)
+    elif args.print:
+        for path in get_cwd_or_paths():
+            display_video(path)
     else:
         for path in get_cwd_or_paths():
             watch_video(path)
