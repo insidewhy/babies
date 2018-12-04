@@ -51,7 +51,7 @@ class Db:
     def get_next_in_series(self):
         for show in self.__series_db:
             viewings = show.get('viewings', None)
-            if viewings is None:
+            if not viewings:
                 return show
 
             # get duration component of end field
@@ -71,5 +71,5 @@ class Db:
         _dump_yaml_file(filepath, self.__series_db)
 
     def get_series_db_path(self, dirpath):
-        return os.path.join(dirpath, '.showlist.yaml')
+        return os.path.join(dirpath, '.videos.yaml')
 

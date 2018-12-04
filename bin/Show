@@ -3,6 +3,7 @@
 import mpv
 import sys
 import argparse
+from datetime import datetime
 import os
 from types import SimpleNamespace
 
@@ -42,11 +43,23 @@ def display_video(path):
     video_path, _ = path_to_video(db, path)
     print(os.path.basename(video_path))
 
+def format_date(date):
+    return str(date).replace('-', '/')
+
+def format_duration(duration):
+    # TODO: format as hh:mm:ss.sss
+    return str(duration)
+
+def parse_duration(duration):
+    # TODO: parse format hh:mm:ss.sss
+    return float(duration)
+
 def watch_video(path):
     player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True, fullscreen=True)
 
     session = SimpleNamespace(position=None)
 
+    @player.on_key_press('Q')
     @player.on_key_press('q')
     def quit_binding():
         session.position = player.time_pos
@@ -55,7 +68,9 @@ def watch_video(path):
     db = Db()
     video_path, video_entry = path_to_video(db, path)
 
+    start_time = datetime.now()
     player.play(video_path)
+    viewings = video_entry and video_entry.get('viewings', None)
 
     # get duration of video
     def set_duration(x):
@@ -64,15 +79,28 @@ def watch_video(path):
             return True
     player.wait_for_property('duration', set_duration, False)
 
+    # once the duration has been read it seems to be safe to seek
+    if viewings:
+        final_viewing = viewings[-1]['end'].split(' at ')[1]
+        player.seek(parse_duration(final_viewing))
+
     # wait for video to end
     player.wait_for_playback()
+    end_time = datetime.now()
 
     if session.position is None:
         session.position = session.duration
 
     if video_entry:
-        # TODO: format duration as 00:00:00
-        video_entry['duration'] = str(session.duration)
+        duration = format_duration(session.duration)
+        if video_entry.get('duration', None) != duration:
+            video_entry['duration'] = duration
+        viewings = video_entry.setdefault('viewings', [])
+
+        viewings.append({
+            'start':  format_date(start_time),
+            'end':  format_date(end_time) + ' at ' + format_duration(session.position)
+        })
         print('recording watched video:', video_entry['video'])
         db.write_series(path)
 
