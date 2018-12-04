@@ -24,7 +24,8 @@ class Db:
         self.__series_db = []
 
     def load_series(self, dirpath):
-        print('TODO: load series database', dirpath)
+        db_path = self.get_series_db_path(dirpath)
+        self.__series_db = _load_yaml_file(db_path)
 
     def load_series_v0(self, dirpath):
         filepath = os.path.join(dirpath, '.showlist')
@@ -46,6 +47,13 @@ class Db:
                 else:
                     video_data['video'] = line
                 self.add_show_to_series(video_data)
+
+    def get_next_in_series(self):
+        for show in self.__series_db:
+            if not show.get('viewings', None):
+                return show
+
+        return None
 
     def add_show_to_series(self, video_data):
         self.__series_db.append(video_data)

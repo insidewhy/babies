@@ -25,7 +25,7 @@ SHOW_EXTENSIONS = [
 def log_mpv(loglevel, component, message):
     print('[{}] {}: {}'.format(loglevel, component, message))
 
-def watch_video(video):
+def watch_video(path):
     player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True, fullscreen=True)
 
     session = SimpleNamespace(position=None)
@@ -36,9 +36,17 @@ def watch_video(video):
         player.quit()
 
     db = Db()
-    db.load_series(os.path.dirname(video))
+    video_path = path
+    video_entry = None
 
-    player.play(video)
+    if os.path.isdir(video_path):
+        db.load_series(path)
+        video_entry = db.get_next_in_series()
+        if not video_entry:
+            raise ValueError('series is complete')
+        video_path = os.path.join(path, video_entry['video'])
+
+    player.play(video_path)
 
     # get duration of video
     def set_duration(x):
@@ -53,7 +61,10 @@ def watch_video(video):
     if session.position is None:
         session.position = session.duration
 
-    print('TODO: update databases, position=', session.position, 'duration=', session.duration)
+    if video_entry:
+        video_entry['duration'] = session.duration
+        # TODO: add the viewing
+        db.write_series(path)
 
 def is_video(path):
     for suffix in SHOW_EXTENSIONS:
@@ -89,24 +100,22 @@ def main():
     parser.add_argument('-c', '--create', action='store_true', help='create series database for videos in current directory')
     parser.add_argument('-C', '--convert', action='store_true', help='convert series database to new version')
     parser.add_argument('-f', '--force', action='store_true', help='force overwrite etc.')
-    parser.add_argument('videos', help='videos or directories containing videos', nargs='*')
+    parser.add_argument('paths', help='paths to videos or series directories', nargs='*')
     args = parser.parse_args()
 
-    def get_dir_or_videos():
-        videos = args.videos
-        return [ os.getcwd() ] if not videos else videos
+    def get_cwd_or_paths():
+        paths = args.paths
+        return [ os.getcwd() ] if not paths else paths
 
     if args.create:
-        for video in get_dir_or_videos():
-            create_show_db(video, args.force)
+        for path in get_cwd_or_paths():
+            create_show_db(path, args.force)
     elif args.convert:
-        for video in get_dir_or_videos():
-            convert_show_db(video, args.force)
-    elif not args.videos:
-        print('TODO: look for video to watch in current directory')
+        for path in get_cwd_or_paths():
+            convert_show_db(path, args.force)
     else:
-        for video in args.videos:
-            watch_video(video)
+        for path in get_cwd_or_paths():
+            watch_video(path)
 
 try:
     main()
