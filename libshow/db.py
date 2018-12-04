@@ -5,14 +5,14 @@ yaml = YAML(typ='safe')
 yaml.default_flow_style = False
 yaml.sort_base_mapping_type_on_output = False
 
-def __load_yaml_file(filepath):
+def _load_yaml_file(filepath):
     with open(filepath, 'r') as stream:
         try:
             return yaml.load(stream)
         except yaml.YAMLError as err:
             raise ValueError(*err.args)
 
-def dump_yaml_file(filepath, data):
+def _dump_yaml_file(filepath, data):
     with open(filepath, 'w') as stream:
         try:
             return yaml.dump(data, stream)
@@ -36,13 +36,13 @@ class Db:
                 line = line.rstrip('\n')
                 video_data = {}
                 if line[0] == '*':
-                    start = 'unknown'
+                    start = 'sometime'
                     space_idx = line.index(' ')
                     if line[1] != ' ':
                         start = line[1:space_idx].replace('-', '/').replace('~', ' ')
                     video_file = line[space_idx + 1:]
                     video_data['video'] = video_file
-                    video_data['viewings'] = [ { 'start': start, 'end': 'finished?' } ]
+                    video_data['viewings'] = [ { 'start': start, 'end': 'sometime at finished?' } ]
                 else:
                     video_data['video'] = line
                 self.add_show_to_series(video_data)
@@ -52,7 +52,7 @@ class Db:
 
     def write_series(self, dirpath):
         filepath = self.get_series_db_path(dirpath)
-        dump_yaml_file(filepath, self.__series_db)
+        _dump_yaml_file(filepath, self.__series_db)
 
     def get_series_db_path(self, dirpath):
         return os.path.join(dirpath, '.showlist.yaml')
