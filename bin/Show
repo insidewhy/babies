@@ -143,7 +143,7 @@ def create_show_db(dirpath, force):
 
     for filename in sorted(os.listdir(dirpath)):
         if is_video(filename):
-            db.add_show_to_series(filename)
+            db.add_show_to_series({ 'video': filename })
 
     db.write_series(dirpath)
 
