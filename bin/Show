@@ -47,12 +47,19 @@ def format_date(date):
     return str(date).replace('-', '/')
 
 def format_duration(duration):
-    # TODO: format as hh:mm:ss.sss
-    return str(duration)
+    hours, min_secs = divmod(duration, 3600)
+    mins, secs = divmod(min_secs, 60)
+    fract = round((secs % 1) * 1000)
+
+    def timecomp(comp):
+        return str(round(comp)).zfill(2)
+
+    return str(round(hours)) + ':' + timecomp(mins) + ':' + timecomp(secs) + '.' + str(fract)
 
 def parse_duration(duration):
-    # TODO: parse format hh:mm:ss.sss
-    return float(duration)
+    hours, mins, secs = duration.split(':')
+    print(duration, float(hours) * 3600 * float(mins) * 60 + float(secs))
+    return float(hours) * 3600 + float(mins) * 60 + float(secs)
 
 def watch_video(path):
     player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True, fullscreen=True)
