@@ -29,12 +29,22 @@ def log_mpv(loglevel, component, message):
 """If path is a directory then load series into db and return next unwatched show else return path to file"""
 def path_to_video(db, path):
     if os.path.isdir(path):
-        db.load_series(path)
-        video_entry = db.get_next_in_series()
-        if not video_entry:
-            raise ValueError('series is complete')
-        video_path = os.path.join(path, video_entry['video'])
-        return video_path, video_entry
+        try:
+            db.load_series(path)
+            video_entry = db.get_next_in_series()
+            if not video_entry:
+                raise ValueError('series is complete')
+            video_path = os.path.join(path, video_entry['video'])
+            return video_path, video_entry
+        except FileNotFoundError as err:
+            # if there is a single video in the directory then use it
+            candidates = list(filter(is_video, os.listdir(path)))
+            if len(candidates) == 1:
+                return candidates[0], None
+            else:
+                # TODO: allow user to select with pager?
+                raise ValueError('multiple candidates:', candidates.join(', '))
+
     else:
         return path, None
 
