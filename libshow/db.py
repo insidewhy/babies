@@ -49,7 +49,7 @@ class Db:
         self.__db = []
 
     def load_series(self, dirpath):
-        db_path = self.get_series_db_path(dirpath)
+        db_path = Db.get_series_db_path(dirpath)
         self.__series_db = _load_yaml_file(db_path)
 
     def load_series_v0(self, dirpath):
@@ -79,31 +79,33 @@ class Db:
         self.__series_db.append(video_data)
 
     def write_series(self, dirpath):
-        filepath = self.get_series_db_path(dirpath)
+        filepath = Db.get_series_db_path(dirpath)
         _dump_yaml_file(filepath, self.__series_db)
 
-    def get_series_db_path(self, dirpath):
+    @staticmethod
+    def get_series_db_path(dirpath):
         return os.path.join(dirpath, '.videos.yaml')
 
-    def add_show_to_global_record(self, video_data):
-        self.__db.append(video_data)
+    def add_show_to_global_record(self, record):
+        self.__db.append(record)
 
     def load_global_record_v0(self):
         old_db_path = os.path.expanduser('~/.showtimes')
         old_entries = _load_old_db(old_db_path, True)
         for video_data in old_entries:
-            new_entry = video_data.copy()
+            record = video_data.copy()
 
             # convert viewings to simpler form for global log
-            new_entry.pop('viewings', None)
+            record.pop('viewings', None)
             viewings = video_data.get('viewings', None)
             if viewings:
-                new_entry['start'] = viewings[0]['start']
+                record['start'] = viewings[0]['start']
 
-            self.__db.append(new_entry)
+            self.add_show_to_global_record(record)
 
     def write_global_record(self):
-        _dump_yaml_file(self.get_global_record_db_path(), self.__db)
+        _dump_yaml_file(Db.get_global_record_db_path(), self.__db)
 
-    def get_global_record_db_path(self):
+    @staticmethod
+    def get_global_record_db_path():
         return os.path.expanduser('~/.videorecord.yaml')

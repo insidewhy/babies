@@ -114,7 +114,7 @@ def create_show_db(dirpath, force):
     db = Db()
 
     # TODO: merge new content with old content instead
-    if not force and os.path.isfile(db.get_series_db_path(dirpath)):
+    if not force and os.path.isfile(Db.get_series_db_path(dirpath)):
         raise ValueError('new database already exists')
 
     for filename in sorted(os.listdir(dirpath)):
@@ -126,16 +126,16 @@ def create_show_db(dirpath, force):
 
 def convert_show_db(dirpath, force):
     db = Db()
-    if not force and os.path.isfile(db.get_series_db_path(dirpath)):
+    if not force and os.path.isfile(Db.get_series_db_path(dirpath)):
         raise ValueError('new show db already exists')
 
-    new_filepath = db.get_series_db_path(dirpath)
+    new_filepath = Db.get_series_db_path(dirpath)
     db.load_series_v0(dirpath)
     db.write_series(dirpath)
 
 def convert_global_show_db(force):
     db = Db()
-    if not force and os.path.isfile(db.get_global_record_db_path()):
+    if not force and os.path.isfile(Db.get_global_record_db_path()):
         raise ValueError('new global record already exists')
     db.load_global_record_v0()
     db.write_global_record()
