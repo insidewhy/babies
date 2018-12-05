@@ -5,6 +5,9 @@ yaml = YAML(typ='safe')
 yaml.default_flow_style = False
 yaml.sort_base_mapping_type_on_output = False
 
+# set this when the end is unknown... assume it finished sometime
+UNKNOWN_END = 'sometime at finished?'
+
 def _load_yaml_file(filepath):
     with open(filepath, 'r') as stream:
         try:
@@ -12,8 +15,8 @@ def _load_yaml_file(filepath):
         except yaml.YAMLError as err:
             raise ValueError(*err.args)
 
-def _dump_yaml_file(filepath, data):
-    with open(filepath, 'w') as stream:
+def _dump_yaml_file(filepath, data, mode = 'w'):
+    with open(filepath, mode) as stream:
         try:
             return yaml.dump(data, stream)
         except yaml.YAMLError as err:
@@ -37,11 +40,23 @@ def _load_old_db(filepath, global_variation):
                     start = line[:space_idx].replace('-', '/').replace('~', ' ')
                 video_file = line[space_idx + 1:]
                 video_data['video'] = video_file
-                video_data['viewings'] = [ { 'start': start, 'end': 'sometime at finished?' } ]
+                video_data['viewings'] = [ { 'start': start, 'end': UNKNOWN_END } ]
             else:
                 video_data['video'] = line
             db_entries.append(video_data)
     return db_entries
+
+def _series_entry_to_global_record(video_data):
+    record = video_data.copy()
+    # convert viewings to simpler form for global log
+    record.pop('viewings', None)
+    viewings = video_data.get('viewings', None)
+    if viewings:
+        record['start'] = viewings[0]['start']
+        end = viewings[0].get('end', UNKNOWN_END)
+        if end != UNKNOWN_END:
+            record['end'] = end
+    return record
 
 class Db:
     def __init__(self):
@@ -93,18 +108,14 @@ class Db:
         old_db_path = os.path.expanduser('~/.showtimes')
         old_entries = _load_old_db(old_db_path, True)
         for video_data in old_entries:
-            record = video_data.copy()
-
-            # convert viewings to simpler form for global log
-            record.pop('viewings', None)
-            viewings = video_data.get('viewings', None)
-            if viewings:
-                record['start'] = viewings[0]['start']
-
+            record = _series_entry_to_global_record(video_data)
             self.add_show_to_global_record(record)
 
     def write_global_record(self):
         _dump_yaml_file(Db.get_global_record_db_path(), self.__db)
+
+    def append_global_record(self, record):
+        _dump_yaml_file(Db.get_global_record_db_path(), [record], 'a')
 
     @staticmethod
     def get_global_record_db_path():

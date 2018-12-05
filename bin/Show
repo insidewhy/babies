@@ -91,18 +91,25 @@ def watch_video(path):
     if session.position is None:
         session.position = session.duration
 
+    duration = format_duration(session.duration)
+    start = format_date(start_time)
+    end = format_date(end_time) + ' at ' + format_duration(session.position)
+
     if video_entry:
-        duration = format_duration(session.duration)
         if video_entry.get('duration', None) != duration:
             video_entry['duration'] = duration
         viewings = video_entry.setdefault('viewings', [])
 
-        viewings.append({
-            'start':  format_date(start_time),
-            'end':  format_date(end_time) + ' at ' + format_duration(session.position)
-        })
+        viewings.append({ 'start': start, 'end': end })
         print('recording watched video:', video_entry['video'])
         db.write_series(path)
+
+    db.append_global_record({
+        'video': os.path.basename(video_path),
+        'duration': duration,
+        'start': start,
+        'end': end,
+    })
 
 def is_video(path):
     for suffix in SHOW_EXTENSIONS:
