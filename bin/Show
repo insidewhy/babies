@@ -127,16 +127,24 @@ def create_show_db(dirpath, force):
 def convert_show_db(dirpath, force):
     db = Db()
     if not force and os.path.isfile(db.get_series_db_path(dirpath)):
-        raise ValueError('new database already exists')
+        raise ValueError('new show db already exists')
 
     new_filepath = db.get_series_db_path(dirpath)
     db.load_series_v0(dirpath)
     db.write_series(dirpath)
 
+def convert_global_show_db(force):
+    db = Db()
+    if not force and os.path.isfile(db.get_global_record_db_path()):
+        raise ValueError('new global record already exists')
+    db.load_global_record_v0()
+    db.write_global_record()
+
 def main():
     parser = argparse.ArgumentParser(description='enjoy your videos')
     parser.add_argument('-c', '--create', action='store_true', help='create series database for videos in current directory')
     parser.add_argument('-C', '--convert', action='store_true', help='convert series database to new version')
+    parser.add_argument('--convert-global', action='store_true', help='convert global series database to new version')
     parser.add_argument('-f', '--force', action='store_true', help='force overwrite etc.')
     parser.add_argument('-p', '--print', action='store_true', help='display video(s) that would be played')
     parser.add_argument('paths', help='paths to videos or series directories', nargs='*')
@@ -149,12 +157,14 @@ def main():
     if args.create:
         for path in get_cwd_or_paths():
             create_show_db(path, args.force)
-    elif args.convert:
-        for path in get_cwd_or_paths():
-            convert_show_db(path, args.force)
     elif args.print:
         for path in get_cwd_or_paths():
             display_video(path)
+    elif args.convert:
+        for path in get_cwd_or_paths():
+            convert_show_db(path, args.force)
+    elif args.convert_global:
+        convert_global_show_db(args.force)
     else:
         for path in get_cwd_or_paths():
             watch_video(path)
