@@ -40,7 +40,7 @@ def path_to_video(db, path):
             # if there is a single video in the directory then use it
             candidates = list(filter(is_video, os.listdir(path)))
             if len(candidates) == 1:
-                return candidates[0], None
+                return os.path.join(path, candidates[0]), None
             else:
                 # TODO: allow user to select with pager?
                 raise ValueError('multiple candidates:', candidates.join(', '))
