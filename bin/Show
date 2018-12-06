@@ -112,6 +112,15 @@ def watch_video(path):
     start = format_date(start_time)
     end = format_date(end_time) + ' at ' + format_duration(session.position)
 
+    # append the global record first in case the series update fails due to full
+    # disk or readonly mount etc.
+    db.append_global_record({
+        'video': os.path.basename(video_path),
+        'duration': duration,
+        'start': start,
+        'end': end,
+    })
+
     if video_entry:
         if video_entry.get('duration', None) != duration:
             video_entry['duration'] = duration
@@ -120,13 +129,6 @@ def watch_video(path):
         viewings.append({ 'start': start, 'end': end })
         print('recording watched video:', video_entry['video'])
         db.write_series(path)
-
-    db.append_global_record({
-        'video': os.path.basename(video_path),
-        'duration': duration,
-        'start': start,
-        'end': end,
-    })
 
 def is_video(path):
     for suffix in SHOW_EXTENSIONS:
