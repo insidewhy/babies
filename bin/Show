@@ -71,7 +71,7 @@ def parse_duration(duration):
     print(duration, float(hours) * 3600 * float(mins) * 60 + float(secs))
     return float(hours) * 3600 + float(mins) * 60 + float(secs)
 
-def watch_video(path):
+def watch_video(path, do_not_record):
     player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True, fullscreen=True)
 
     session = SimpleNamespace(position=None)
@@ -112,23 +112,24 @@ def watch_video(path):
     start = format_date(start_time)
     end = format_date(end_time) + ' at ' + format_duration(session.position)
 
-    # append the global record first in case the series update fails due to full
-    # disk or readonly mount etc.
-    db.append_global_record({
-        'video': os.path.basename(video_path),
-        'duration': duration,
-        'start': start,
-        'end': end,
-    })
+    if not do_not_record:
+        # append the global record first in case the series update fails due to full
+        # disk or readonly mount etc.
+        db.append_global_record({
+            'video': os.path.basename(video_path),
+            'duration': duration,
+            'start': start,
+            'end': end,
+        })
 
-    if video_entry:
-        if video_entry.get('duration', None) != duration:
-            video_entry['duration'] = duration
-        viewings = video_entry.setdefault('viewings', [])
+        if video_entry:
+            if video_entry.get('duration', None) != duration:
+                video_entry['duration'] = duration
+            viewings = video_entry.setdefault('viewings', [])
 
-        viewings.append({ 'start': start, 'end': end })
-        print('recording watched video:', video_entry['video'])
-        db.write_series(path)
+            viewings.append({ 'start': start, 'end': end })
+            print('recording watched video:', video_entry['video'])
+            db.write_series(path)
 
 def is_video(path):
     for suffix in SHOW_EXTENSIONS:
@@ -151,18 +152,18 @@ def create_show_db(dirpath, force):
 
 
 def convert_show_db(dirpath, force):
-    db = Db()
     if not force and os.path.isfile(Db.get_series_db_path(dirpath)):
         raise ValueError('new show db already exists')
 
     new_filepath = Db.get_series_db_path(dirpath)
+    db = Db()
     db.load_series_v0(dirpath)
     db.write_series(dirpath)
 
 def convert_global_show_db(force):
-    db = Db()
     if not force and os.path.isfile(Db.get_global_record_db_path()):
         raise ValueError('new global record already exists')
+    db = Db()
     db.load_global_record_v0()
     db.write_global_record()
 
@@ -170,6 +171,7 @@ def main():
     parser = argparse.ArgumentParser(description='enjoy your videos')
     parser.add_argument('-c', '--create', action='store_true', help='create series database for videos in current directory')
     parser.add_argument('-C', '--convert', action='store_true', help='convert series database to new version')
+    parser.add_argument('-d', '--do-not-record', action='store_true', help='dont write to series or global records')
     parser.add_argument('--convert-global', action='store_true', help='convert global series database to new version')
     parser.add_argument('-f', '--force', action='store_true', help='force overwrite etc.')
     parser.add_argument('-p', '--print', action='store_true', help='display video(s) that would be played')
@@ -193,7 +195,7 @@ def main():
         convert_global_show_db(args.force)
     else:
         for path in get_cwd_or_paths():
-            watch_video(path)
+            watch_video(path, args.do_not_record)
 
 try:
     main()
