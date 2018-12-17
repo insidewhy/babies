@@ -101,6 +101,12 @@ class Db:
     def get_series_db_path(dirpath):
         return os.path.join(dirpath, '.videos.yaml')
 
+    def load_global_record(self):
+        self.__series_db = _load_yaml_file(Db.get_global_record_db_path())
+
+    def filter_global_record(self, filter_expression):
+        return filter(filter_expression, self.__series_db)
+
     def add_show_to_global_record(self, record):
         self.__db.append(record)
 
