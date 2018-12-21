@@ -75,7 +75,7 @@ def parse_duration(duration):
     print(duration, float(hours) * 3600 * float(mins) * 60 + float(secs))
     return float(hours) * 3600 + float(mins) * 60 + float(secs)
 
-def watch_video(path, do_not_record, night_mode):
+def watch_video(path, dont_record, night_mode):
     player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True, fullscreen=True)
     if night_mode:
         # player['af'] = 'dynaudnorm=f=100:p=0.66'
@@ -122,7 +122,7 @@ def watch_video(path, do_not_record, night_mode):
     start = format_time_with_duration(start_time, start_position)
     end = format_time_with_duration(end_time, session.position)
 
-    if not do_not_record:
+    if not dont_record:
         video_filename = os.path.basename(video_path)
         # append the global record first in case the series update fails due to full
         # disk or readonly mount etc.
@@ -191,7 +191,7 @@ def main():
     parser = argparse.ArgumentParser(description='enjoy your videos')
     parser.add_argument('-c', '--create', action='store_true', help='create series database for videos in current directory')
     parser.add_argument('-C', '--convert', action='store_true', help='convert series database to new version')
-    parser.add_argument('-d', '--do-not-record', action='store_true', help='dont write to series or global records')
+    parser.add_argument('-d', '--dont-record', action='store_true', help='don\'t write to series or global records')
     parser.add_argument('--convert-global', action='store_true', help='convert global series database to new version')
     parser.add_argument('-f', '--force', action='store_true', help='force overwrite etc.')
     parser.add_argument('-p', '--print', action='store_true', help='display video(s) that would be played')
@@ -219,7 +219,7 @@ def main():
         convert_global_show_db(args.force)
     else:
         for path in get_cwd_or_paths():
-            watch_video(path, args.do_not_record, args.night_mode)
+            watch_video(path, args.dont_record, args.night_mode)
 
 try:
     main()
