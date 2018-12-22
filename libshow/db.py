@@ -1,9 +1,5 @@
-from ruamel.yaml import YAML
 import os
-
-yaml = YAML(typ='safe')
-yaml.default_flow_style = False
-yaml.sort_base_mapping_type_on_output = False
+from .yaml import yaml
 
 # set this when the end is unknown... assume it finished sometime
 UNKNOWN_END = 'sometime at finished?'

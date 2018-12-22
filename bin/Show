@@ -9,6 +9,7 @@ import re
 from types import SimpleNamespace
 
 from libshow.db import Db
+from libshow.yaml import yaml
 
 SHOW_EXTENSIONS = [
     'mkv',
@@ -179,13 +180,18 @@ def convert_global_show_db(force):
     db.load_global_record_v0()
     db.write_global_record()
 
-def grep_show_record(terms):
+def grep_show_record(terms, verbose):
     db = Db()
     db.load_global_record()
     matches = db.filter_global_record(
         lambda record: all(re.search(term, record['video'], re.IGNORECASE) for term in terms)
     )
-    print('\n'.join(list(map(lambda m: m['video'], matches))))
+
+    if verbose:
+        yaml.dump(list(matches), sys.stdout)
+    else:
+        print('\n'.join(list(map(lambda m: m['video'], matches))))
+
 
 def main():
     parser = argparse.ArgumentParser(description='enjoy your videos')
@@ -197,6 +203,7 @@ def main():
     parser.add_argument('-p', '--print', action='store_true', help='display video(s) that would be played')
     parser.add_argument('-n', '--night-mode', action='store_true', help='normalise audio')
     parser.add_argument('-g', '--grep', action='store_true', help='grep log for provided strings')
+    parser.add_argument('-v', '--verbose', action='store_true', help='more verbose output')
     parser.add_argument('paths', help='paths to videos or series directories', nargs='*')
     args = parser.parse_args()
 
@@ -214,7 +221,7 @@ def main():
         for path in get_cwd_or_paths():
             convert_show_db(path, args.force)
     elif args.grep:
-        grep_show_record(args.paths)
+        grep_show_record(args.paths, args.verbose)
     elif args.convert_global:
         convert_global_show_db(args.force)
     else:
