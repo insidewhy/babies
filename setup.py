@@ -9,4 +9,8 @@ setup(name='Show',
       license='MIT',
       scripts=['bin/Show'],
       packages=['libshow'],
+      install_requires=[
+          'ruamel.yaml>=0.15.77',
+          'python-mpv>=0.3.0'
+      ],
       zip_safe=False)
