@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='Show',
-      version='0.1',
+      version='0.2',
       description='Watch shows and record your viewing history',
       url='http://github.com/ohjames/Show',
       author='James Pike',
