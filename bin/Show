@@ -77,7 +77,7 @@ def parse_duration(duration):
     return float(hours) * 3600 + float(mins) * 60 + float(secs)
 
 def watch_video(path, dont_record, night_mode):
-    player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True, fullscreen=True)
+    player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True, fullscreen=True, osc=True)
     if night_mode:
         # player['af'] = 'dynaudnorm=f=100:p=0.66'
         # player['af'] = 'dynaudnorm=f=150:g=15'
