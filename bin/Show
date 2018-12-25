@@ -183,9 +183,9 @@ def main():
     paths_help = 'paths to videos and/or directories containing series and or/videos'
 
     subparsers = parser.add_subparsers(title='subcommands', dest='subcommand')
-    subparsers.add_parser('create', help='create series db', aliases=['c']).add_argument(
-        'paths', help=paths_help, nargs='*'
-    )
+    create = subparsers.add_parser('create', help='create series db', aliases=['c'])
+    create.add_argument('paths', help=paths_help, nargs='*')
+    create.add_argument('-f', '--force', action='store_true', help='force overwrite of existing database')
 
     find = subparsers.add_parser('find', help='find entry in global record', aliases=['f'])
     find.add_argument(
