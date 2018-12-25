@@ -63,14 +63,6 @@ class Db:
         db_path = Db.get_series_db_path(dirpath)
         self.__series_db = _load_yaml_file(db_path)
 
-    def load_series_v0(self, dirpath):
-        filepath = os.path.join(dirpath, '.showlist')
-        if not os.path.isfile(filepath):
-            raise ValueError('database does not exist in this directory')
-        old_entries = _load_old_db(filepath, False)
-        for video_data in old_entries:
-            self.add_show_to_series(video_data)
-
     def get_next_in_series(self):
         for show in self.__series_db:
             viewings = show.get('viewings', None)
@@ -105,13 +97,6 @@ class Db:
 
     def add_show_to_global_record(self, record):
         self.__db.append(record)
-
-    def load_global_record_v0(self):
-        old_db_path = os.path.expanduser('~/.showtimes')
-        old_entries = _load_old_db(old_db_path, True)
-        for video_data in old_entries:
-            record = _series_entry_to_global_record(video_data)
-            self.add_show_to_global_record(record)
 
     def write_global_record(self):
         _dump_yaml_file(Db.get_global_record_db_path(), self.__db)

@@ -164,22 +164,6 @@ def create_show_db(dirpath, force):
     db.write_series(dirpath)
 
 
-def convert_show_db(dirpath, force):
-    if not force and os.path.isfile(Db.get_series_db_path(dirpath)):
-        raise ValueError('new show db already exists')
-
-    new_filepath = Db.get_series_db_path(dirpath)
-    db = Db()
-    db.load_series_v0(dirpath)
-    db.write_series(dirpath)
-
-def convert_global_show_db(force):
-    if not force and os.path.isfile(Db.get_global_record_db_path()):
-        raise ValueError('new global record already exists')
-    db = Db()
-    db.load_global_record_v0()
-    db.write_global_record()
-
 def grep_show_record(terms, verbose):
     db = Db()
     db.load_global_record()
@@ -201,16 +185,6 @@ def main():
     subparsers = parser.add_subparsers(title='subcommands', dest='subcommand')
     subparsers.add_parser('create', help='create series db', aliases=['c']).add_argument(
         'paths', help=paths_help, nargs='*'
-    )
-
-    convert_series = subparsers.add_parser('convert-series', help='convert series db from old format')
-    convert_series.add_argument('paths', help=paths_help, nargs='*')
-    convert_series.add_argument(
-        '-f', '--force', action='store_true', help='force overwrite of existing database'
-    )
-
-    subparsers.add_parser('convert-global', help='convert global record from old format').add_argument(
-        '-f', '--force', action='store_true', help='force overwrite of existing database'
     )
 
     find = subparsers.add_parser('find', help='find entry in global record', aliases=['f'])
@@ -257,11 +231,6 @@ def main():
     elif subcommand == 'print' or subcommand == 'p':
         for path in paths:
             display_video(path)
-    elif subcommand == 'convert-series':
-        for path in paths:
-            convert_show_db(path, args.force)
-    elif subcommand == 'convert-global':
-        convert_global_show_db(args.force)
 
 try:
     main()
