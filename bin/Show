@@ -112,6 +112,11 @@ def watch_video(path, dont_record, night_mode):
         start_position = parse_duration(final_viewing)
         player.seek(start_position)
 
+    video_filename = os.path.basename(video_path)
+    duration = format_duration(session.duration)
+
+    player.show_text(video_filename + ' (' + format_duration(start_position) + ' / ' + duration + ')' , 2000)
+
     # wait for video to end
     player.wait_for_playback()
     end_time = datetime.now()
@@ -119,12 +124,10 @@ def watch_video(path, dont_record, night_mode):
     if session.position is None:
         session.position = session.duration
 
-    duration = format_duration(session.duration)
-    start = format_time_with_duration(start_time, start_position)
-    end = format_time_with_duration(end_time, session.position)
-
     if not dont_record:
-        video_filename = os.path.basename(video_path)
+        start = format_time_with_duration(start_time, start_position)
+        end = format_time_with_duration(end_time, session.position)
+
         # append the global record first in case the series update fails due to full
         # disk or readonly mount etc.
         db.append_global_record({
