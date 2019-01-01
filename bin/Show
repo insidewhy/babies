@@ -164,17 +164,17 @@ def create_show_db(dirpath, force):
     db.write_series(dirpath)
 
 
-def grep_show_record(terms, verbose):
+def grep_show_record(terms, quiet):
     db = Db()
     db.load_global_record()
     matches = db.filter_global_record(
         lambda record: all(re.search(term, record['video'], re.IGNORECASE) for term in terms)
     )
 
-    if verbose:
-        yaml.dump(list(matches), sys.stdout)
-    else:
+    if quiet:
         print('\n'.join(list(map(lambda m: m['video'], matches))))
+    else:
+        yaml.dump(list(matches), sys.stdout)
 
 
 def main():
@@ -191,7 +191,7 @@ def main():
     find.add_argument(
         'search_terms', help='regular expressions, all must match', nargs='+'
     )
-    find.add_argument('-v', '--verbose', action='store_true', help='show full entry for each match')
+    find.add_argument('-q', '--quiet', action='store_true', help='only show video names')
 
     watch = subparsers.add_parser('watch', help='watch [next] show at each path', aliases=['w', 'night', 'n'])
     watch.add_argument('paths', help=paths_help, nargs='*')
@@ -224,7 +224,7 @@ def main():
         for path in paths:
             create_show_db(path, args.force)
     elif subcommand == 'find' or subcommand == 'f':
-        grep_show_record(args.search_terms, args.verbose)
+        grep_show_record(args.search_terms, args.quiet)
     elif night_mode or subcommand == 'watch' or subcommand == 'w':
         for path in paths:
             watch_video(path, args.dont_record, night_mode or args.night_mode)
