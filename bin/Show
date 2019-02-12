@@ -3,6 +3,9 @@
 import mpv
 import sys
 import argparse
+from readchar import readchar
+import termios
+from threading import Thread
 from datetime import datetime
 import os
 import re
@@ -117,8 +120,39 @@ def watch_video(path, dont_record, night_mode):
 
     player.show_text(video_filename + ' (' + format_duration(start_position) + ' / ' + duration + ')' , 2000)
 
+    def readchars():
+        while True:
+            c = readchar()
+            # TODO: pass through to mpv's key binding system
+            if c == '9':
+                player.volume -= 5
+            elif c == '0':
+                player.volume += 5
+            elif c == 'q' or c == 'Q':
+                quit_binding()
+
+    is_win = sys.platform in ('win32', 'cygwin')
+
+    # backup stdin settings, readchar messes with them
+    if not is_win:
+        stdin_fd = sys.stdin.fileno()
+        stdin_attr = termios.tcgetattr(stdin_fd)
+
+    cmd_thread = Thread(target = readchars)
+    cmd_thread.daemon = True
+    cmd_thread.start()
+
     # wait for video to end
     player.wait_for_playback()
+
+    # see above
+    if not is_win:
+        termios.tcsetattr(stdin_fd, termios.TCSADRAIN, stdin_attr)
+
+    # readchar blocks this, see daemon use above
+    # cmd_thread.join()
+
+    # process video finishing
     end_time = datetime.now()
 
     if session.position is None:

@@ -11,6 +11,7 @@ setup(name='Show',
       packages=['libshow'],
       install_requires=[
           'ruamel.yaml>=0.15.77',
-          'python-mpv>=0.3.0'
+          'python-mpv>=0.3.0',
+          'readchar>=2.0.1',
       ],
       zip_safe=False)
