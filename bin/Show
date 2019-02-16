@@ -123,13 +123,7 @@ def watch_video(path, dont_record, night_mode):
     def readchars():
         while True:
             c = readchar()
-            # TODO: pass through to mpv's key binding system
-            if c == '9':
-                player.volume -= 5
-            elif c == '0':
-                player.volume += 5
-            elif c == 'q' or c == 'Q':
-                quit_binding()
+            player.command('keypress', c)
 
     is_win = sys.platform in ('win32', 'cygwin')
 
