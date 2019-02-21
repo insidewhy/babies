@@ -237,7 +237,13 @@ def main():
         'paths', help=paths_help, nargs='*'
     )
 
-    args = parser.parse_args()
+    argv = sys.argv[1:]
+    # if the first argument is a file then prepend the "watch" command
+    if len(argv) and '.' in argv[0]:
+        argv = ['w'] + argv
+
+    args = parser.parse_args(argv)
+
     paths = []
     try:
         if args.paths:
