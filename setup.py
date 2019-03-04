@@ -1,14 +1,14 @@
 from setuptools import setup
 
-setup(name='Show',
+setup(name='babies',
       version='0.2',
       description='Watch shows and record your viewing history',
-      url='http://github.com/ohjames/Show',
+      url='http://github.com/ohjames/babies',
       author='James Pike',
       author_email='github@chilon.net',
       license='MIT',
-      scripts=['bin/Show'],
-      packages=['libshow'],
+      scripts=['bin/babies'],
+      packages=['babies'],
       install_requires=[
           'ruamel.yaml>=0.15.77',
           'python-mpv>=0.3.0',

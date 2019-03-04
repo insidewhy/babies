@@ -11,8 +11,8 @@ import os
 import re
 from types import SimpleNamespace
 
-from libshow.db import Db
-from libshow.yaml import yaml
+from babies.db import Db
+from babies.yaml import yaml
 
 SHOW_EXTENSIONS = [
     'mkv',

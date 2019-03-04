@@ -1,3 +1,3 @@
 #!/bin/zsh
 
-PYTHONPATH=$PWD ./bin/Show $*
+PYTHONPATH=$PWD ./bin/babies $*
