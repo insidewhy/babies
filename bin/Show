@@ -29,7 +29,7 @@ SHOW_EXTENSIONS = [
 ]
 
 def log_mpv(loglevel, component, message):
-    print('[{}] {}: {}'.format(loglevel, component, message))
+    print('\r[{}] {}: {}'.format(loglevel, component, message))
 
 """If path is a directory then load series into db and return next unwatched show else return path to file"""
 def path_to_video(db, path):
