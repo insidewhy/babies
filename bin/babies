@@ -186,7 +186,7 @@ def create_show_db(dirpath, force):
 
     # TODO: merge new content with old content instead
     if not force and os.path.isfile(Db.get_series_db_path(dirpath)):
-        raise ValueError('new database already exists')
+        raise ValueError('series record already exists')
 
     for filename in sorted(os.listdir(dirpath)):
         if is_video(filename):
