@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='babies',
-      version='0.2',
+      version='0.2.1',
       description='Watch shows and record your viewing history',
       url='http://github.com/ohjames/babies',
       author='James Pike',

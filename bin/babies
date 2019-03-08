@@ -224,7 +224,7 @@ def main():
     )
     find.add_argument('-q', '--quiet', action='store_true', help='only show video names')
 
-    watch = subparsers.add_parser('watch', help='watch [next] show at each path', aliases=['w', 'night', 'n', 'dryrun', 'd'])
+    watch = subparsers.add_parser('watch', help='watch [next] show at each path', aliases=['w', 'night', 'n', 'dryrun', 'd', 'p', 'print'])
     watch.add_argument('paths', help=paths_help, nargs='*')
     watch.add_argument(
         '-d', '--dont-record', action='store_true', help='don\'t write to series or global records'
@@ -232,9 +232,8 @@ def main():
     watch.add_argument(
         '-n', '--night-mode', action='store_true', help='normalise audio'
     )
-
-    subparsers.add_parser('print', help='display [next] show at each path', aliases=['p']).add_argument(
-        'paths', help=paths_help, nargs='*'
+    watch.add_argument(
+        '-p', '--print', action='store_true', help='print shows rather than viewing them'
     )
 
     argv = sys.argv[1:]
@@ -261,13 +260,16 @@ def main():
             create_show_db(path, args.force)
     elif subcommand == 'find' or subcommand == 'f':
         grep_show_record(args.search_terms, args.quiet)
-    elif subcommand == 'print' or subcommand == 'p':
-        for path in paths:
-            display_video(path)
     else:
+        print_show = subcommand == 'print' or subcommand == 'p'
+        if print_show or args.print:
+            for path in paths:
+                display_video(path)
+            return
+
         night_mode = subcommand == 'night' or subcommand == 'n'
         dry_run = subcommand == 'dryrun' or subcommand == 'd'
-        if night_mode or dry_run or subcommand == 'watch' or subcommand == 'w':
+        if night_mode or dry_run or print_show or subcommand == 'watch' or subcommand == 'w':
             for path in paths:
                 watch_video(path, dry_run or args.dont_record, night_mode or args.night_mode)
 
