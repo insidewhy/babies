@@ -10,6 +10,7 @@ from datetime import datetime
 import os
 import re
 from types import SimpleNamespace
+import ffmpeg
 
 from babies.db import Db
 from babies.yaml import yaml
@@ -57,6 +58,24 @@ def display_video(path):
     db = Db()
     video_path, _ = path_to_video(db, path)
     print(os.path.basename(video_path))
+
+def record_video(path, comment):
+    db = Db()
+    video_path, video_entry = path_to_video(db, path)
+    duration = format_duration(float(ffmpeg.probe(video_path)['format']['duration']))
+
+    video_filename = os.path.basename(video_path)
+    db.append_global_record({
+        'video': video_filename,
+        'duration': duration,
+        'start': format_duration(0),
+        'end': duration,
+        'comment': comment,
+    })
+    print('recorded ' + video_filename + ' in global log with comment: ' + comment)
+
+    if video_entry:
+        print('todo: record in series log')
 
 def format_date(date):
     return str(date).replace('-', '/')
@@ -236,6 +255,11 @@ def main():
         '-p', '--print', action='store_true', help='print shows rather than viewing them'
     )
 
+    path_help = 'paths to video and/or directory containing series and or/video'
+    record = subparsers.add_parser('record', help='record having watched video', aliases=['r'])
+    record.add_argument('path', help=path_help, type=str)
+    record.add_argument('comment', help='comment to record with video', type=str)
+
     argv = sys.argv[1:]
     # if the first argument is a file then prepend the "watch" command
     if len(argv) and '.' in argv[0]:
@@ -260,6 +284,8 @@ def main():
             create_show_db(path, args.force)
     elif subcommand == 'find' or subcommand == 'f':
         grep_show_record(args.search_terms, args.quiet)
+    elif subcommand == 'record' or subcommand == 'r':
+        record_video(args.path, args.comment)
     else:
         print_show = subcommand == 'print' or subcommand == 'p'
         if print_show or args.print:
