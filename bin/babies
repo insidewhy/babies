@@ -65,17 +65,23 @@ def record_video(path, comment):
     duration = format_duration(float(ffmpeg.probe(video_path)['format']['duration']))
 
     video_filename = os.path.basename(video_path)
+    start = 'unknown at ' + format_duration(0)
+    end = 'unknown at ' + duration
     db.append_global_record({
         'video': video_filename,
         'duration': duration,
-        'start': format_duration(0),
-        'end': duration,
+        'start': start,
+        'end': end,
         'comment': comment,
     })
     print('recorded ' + video_filename + ' in global log with comment: ' + comment)
 
     if video_entry:
-        print('todo: record in series log')
+        video_entry['duration'] = duration
+        viewings = video_entry.setdefault('viewings', [])
+        viewings.append({ 'start': start, 'end': end, 'comment': comment })
+        db.write_series(path)
+        print('recorded ' + video_filename + ' in series log with comment: ' + comment)
 
 def format_date(date):
     return str(date).replace('-', '/')
