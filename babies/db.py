@@ -4,6 +4,7 @@ from .yaml import yaml
 # set this when the end is unknown... assume it finished sometime
 UNKNOWN_END = 'sometime at finished?'
 
+
 def _load_yaml_file(filepath):
     with open(filepath, 'r') as stream:
         try:
@@ -11,12 +12,14 @@ def _load_yaml_file(filepath):
         except yaml.YAMLError as err:
             raise ValueError(*err.args)
 
-def _dump_yaml_file(filepath, data, mode = 'w'):
+
+def _dump_yaml_file(filepath, data, mode='w'):
     with open(filepath, mode) as stream:
         try:
             return yaml.dump(data, stream)
         except yaml.YAMLError as err:
             raise ValueError(*err.args)
+
 
 def _load_old_db(filepath, global_variation):
     db_entries = []
@@ -33,26 +36,16 @@ def _load_old_db(filepath, global_variation):
                 start = 'sometime'
                 space_idx = line.index(' ')
                 if line[0] != ' ':
-                    start = line[:space_idx].replace('-', '/').replace('~', ' ')
+                    start = line[:space_idx]\
+                        .replace('-', '/').replace('~', ' ')
                 video_file = line[space_idx + 1:]
                 video_data['video'] = video_file
-                video_data['viewings'] = [ { 'start': start, 'end': UNKNOWN_END } ]
+                video_data['viewings'] = [{'start': start, 'end': UNKNOWN_END}]
             else:
                 video_data['video'] = line
             db_entries.append(video_data)
     return db_entries
 
-def _series_entry_to_global_record(video_data):
-    record = video_data.copy()
-    # convert viewings to simpler form for global log
-    record.pop('viewings', None)
-    viewings = video_data.get('viewings', None)
-    if viewings:
-        record['start'] = viewings[0]['start']
-        end = viewings[0].get('end', UNKNOWN_END)
-        if end != UNKNOWN_END:
-            record['end'] = end
-    return record
 
 class Db:
     def __init__(self):
@@ -73,7 +66,8 @@ class Db:
             final_viewing = viewings[-1]['end'].split(' at ')[1]
 
             # if the final viewing didn't complete the show then it is next
-            if final_viewing != 'finished?' and final_viewing != show.get('duration', None):
+            if (final_viewing != 'finished?' and
+                    final_viewing != show.get('duration', None)):
                 return show
 
         return None
