@@ -175,7 +175,7 @@ def watch_video(path, dont_record, night_mode):
         stdin_fd = sys.stdin.fileno()
         stdin_attr = termios.tcgetattr(stdin_fd)
 
-    cmd_thread = Thread(target = readchars)
+    cmd_thread = Thread(target=readchars)
     cmd_thread.daemon = True
     cmd_thread.start()
 
@@ -214,15 +214,17 @@ def watch_video(path, dont_record, night_mode):
                 video_entry['duration'] = duration
             viewings = video_entry.setdefault('viewings', [])
 
-            viewings.append({ 'start': start, 'end': end })
+            viewings.append({'start': start, 'end': end})
             db.write_series(path)
             print('recorded video in series record:', video_filename)
+
 
 def is_video(path):
     for suffix in SHOW_EXTENSIONS:
         if path.endswith('.' + suffix):
             return True
     return False
+
 
 def create_show_db(dirpath, force):
     db = Db()
@@ -233,7 +235,7 @@ def create_show_db(dirpath, force):
 
     for filename in sorted(os.listdir(dirpath)):
         if is_video(filename):
-            db.add_show_to_series({ 'video': filename })
+            db.add_show_to_series({'video': filename})
 
     db.write_series(dirpath)
 
@@ -298,7 +300,7 @@ def main():
     except AttributeError:
         pass
     if not paths:
-         paths = [ os.getcwd() ]
+         paths = [os.getcwd()]
 
     subcommand = args.subcommand
     if subcommand is None:
@@ -322,6 +324,7 @@ def main():
         if night_mode or dry_run or print_show or subcommand == 'watch' or subcommand == 'w':
             for path in paths:
                 watch_video(path, dry_run or args.dont_record, night_mode or args.night_mode)
+
 
 try:
     main()
