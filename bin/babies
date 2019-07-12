@@ -9,7 +9,8 @@ from threading import Thread
 from datetime import datetime
 import os
 import re
-from types import SimpleNamespace
+from typing import Optional
+from dataclasses import dataclass
 import ffmpeg
 
 from babies.db import Db
@@ -29,11 +30,22 @@ SHOW_EXTENSIONS = [
     'mov'
 ]
 
+
+@dataclass
+class Session:
+    duration: Optional[int]
+    position: Optional[float]
+
+
 def log_mpv(loglevel, component, message):
     print('\r[{}] {}: {}'.format(loglevel, component, message))
 
-"""If path is a directory then load series into db and return next unwatched show else return path to file"""
+
 def path_to_video(db, path):
+    """
+        If path is a directory then load series into db and return next
+        unwatched show else return path to file
+    """
     if os.path.isdir(path):
         try:
             db.load_series(path)
@@ -42,7 +54,7 @@ def path_to_video(db, path):
                 raise ValueError('series is complete')
             video_path = os.path.join(path, video_entry['video'])
             return video_path, video_entry
-        except FileNotFoundError as err:
+        except FileNotFoundError:
             # if there is a single video in the directory then use it
             candidates = list(filter(is_video, os.listdir(path)))
             if len(candidates) == 1:
@@ -53,6 +65,7 @@ def path_to_video(db, path):
 
     else:
         return path, None
+
 
 def display_video(path):
     db = Db()
@@ -79,12 +92,14 @@ def record_video(path, comment):
     if video_entry:
         video_entry['duration'] = duration
         viewings = video_entry.setdefault('viewings', [])
-        viewings.append({ 'start': start, 'end': end, 'comment': comment })
+        viewings.append({'start': start, 'end': end, 'comment': comment})
         db.write_series(path)
         print('recorded ' + video_filename + ' in series log with comment: ' + comment)
 
+
 def format_date(date):
     return str(date).replace('-', '/')
+
 
 def format_duration(duration):
     hours, min_secs = divmod(duration, 3600)
@@ -96,13 +111,16 @@ def format_duration(duration):
 
     return str(round(hours)) + ':' + timecomp(mins) + ':' + timecomp(secs) + '.' + str(fract)
 
+
 def format_time_with_duration(time, duration):
     return format_date(time) + ' at ' + format_duration(duration)
+
 
 def parse_duration(duration):
     hours, mins, secs = duration.split(':')
     print(duration, float(hours) * 3600 * float(mins) * 60 + float(secs))
     return float(hours) * 3600 + float(mins) * 60 + float(secs)
+
 
 def watch_video(path, dont_record, night_mode):
     player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True, fullscreen=True, osc=True)
@@ -111,7 +129,7 @@ def watch_video(path, dont_record, night_mode):
         # player['af'] = 'dynaudnorm=f=150:g=15'
         player['af'] = 'dynaudnorm'
 
-    session = SimpleNamespace(position=None)
+    session = Session(None, None)
 
     @player.on_key_press('Q')
     @player.on_key_press('q')
