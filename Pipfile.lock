@@ -26,6 +26,13 @@
             ],
             "version": "==1.4"
         },
+        "mypy-extensions": {
+            "hashes": [
+                "sha256:37e0e956f41369209a3d5f34580150bcacfabaa57b33a15c0b25f4b5725e0812",
+                "sha256:b16cabe759f55e3409a7d231ebd2841378fb0c27a5d1994719e340e4f429ac3e"
+            ],
+            "version": "==0.4.1"
+        },
         "python-mpv": {
             "hashes": [
                 "sha256:13dbbbcbd996afda37163cae6d4cbad0ef510188e467b16bc50aadc2a2cbdd52"

@@ -1,12 +1,18 @@
 import os
 from .yaml import yaml
 from ruamel.yaml import YAMLError
-from typing import Dict, List, Union
+from typing import List, Dict
+from mypy_extensions import TypedDict
 
 # set this when the end is unknown... assume it finished sometime
 UNKNOWN_END = 'sometime at finished?'
 
-VideoData = Dict[str, Union[str, List[Dict[str, str]]]]
+
+class VideoData(TypedDict, total=False):
+    video: str
+    viewings: List[Dict[str, str]]
+
+
 VideoDb = List[VideoData]
 
 

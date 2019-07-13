@@ -14,6 +14,7 @@ setup(name='babies',
           'python-mpv>=0.3.0',
           'readchar>=2.0.1',
           'ffmpeg',
+          'mypy-extensions',
       ],
       tests_requires=['mypy>=0.711'],
       zip_safe=False)
