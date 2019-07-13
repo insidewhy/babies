@@ -13,6 +13,7 @@ setup(name='babies',
           'ruamel.yaml>=0.15.77',
           'python-mpv>=0.3.0',
           'readchar>=2.0.1',
+          'ffmpeg',
       ],
       tests_requires=['mypy>=0.711'],
       zip_safe=False)

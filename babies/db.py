@@ -1,15 +1,20 @@
 import os
 from .yaml import yaml
+from ruamel.yaml import YAMLError
+from typing import Dict, List, Union
 
 # set this when the end is unknown... assume it finished sometime
 UNKNOWN_END = 'sometime at finished?'
+
+VideoData = Dict[str, Union[str, List[Dict[str, str]]]]
+VideoDb = List[VideoData]
 
 
 def _load_yaml_file(filepath):
     with open(filepath, 'r') as stream:
         try:
             return yaml.load(stream)
-        except yaml.YAMLError as err:
+        except YAMLError as err:
             raise ValueError(*err.args)
 
 
@@ -17,7 +22,7 @@ def _dump_yaml_file(filepath, data, mode='w'):
     with open(filepath, mode) as stream:
         try:
             return yaml.dump(data, stream)
-        except yaml.YAMLError as err:
+        except YAMLError as err:
             raise ValueError(*err.args)
 
 
@@ -26,7 +31,7 @@ def _load_old_db(filepath, global_variation):
     with open(filepath, 'r') as fp:
         for _, line in enumerate(fp):
             line = line.rstrip('\n')
-            video_data = {}
+            video_data: VideoData = {}
 
             if global_variation or line[0] == '*':
                 if not global_variation:
@@ -49,8 +54,8 @@ def _load_old_db(filepath, global_variation):
 
 class Db:
     def __init__(self):
-        self.__series_db = []
-        self.__db = []
+        self.__series_db: VideoDb = []
+        self.__db: VideoDb = []
 
     def load_series(self, dirpath):
         db_path = Db.get_series_db_path(dirpath)
