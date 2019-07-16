@@ -26,7 +26,7 @@ This creates a file `/media/show/.videos.yaml` which you can edit if you want. T
 % babies watch /media/show
 ```
 
-This will watch the show with `mpv`.
+This will watch the show with `mpv` and when you are done it will update the file at `/media/show/.videos.yaml` to record your viewing session.
 
 Most commands which accept a directory or filename will choose the current directory if the argument is not specified. There are also shorter aliases for every command. The following command is equivalent to the previous:
 ```bash
