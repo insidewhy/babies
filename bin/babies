@@ -147,7 +147,10 @@ def watch_video(path, dont_record, night_mode, sub_file):
     if os.path.isfile(options_path):
         options = load_yaml_file(options_path)
         for opt_name, opt_val in options.items():
-            player[opt_name] = opt_val
+            if opt_name == 'before':
+                os.system(opt_val)
+            else:
+                player[opt_name] = opt_val
 
     start_time = datetime.now()
     player.play(video_path)
