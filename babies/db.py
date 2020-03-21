@@ -1,5 +1,5 @@
 import os
-from .yaml import yaml
+from .yaml import yaml, load_yaml_file
 from ruamel.yaml import YAMLError
 from typing import List, Dict
 from mypy_extensions import TypedDict
@@ -15,13 +15,6 @@ class VideoData(TypedDict, total=False):
 
 VideoDb = List[VideoData]
 
-
-def _load_yaml_file(filepath):
-    with open(filepath, 'r') as stream:
-        try:
-            return yaml.load(stream)
-        except YAMLError as err:
-            raise ValueError(*err.args)
 
 
 def _dump_yaml_file(filepath, data, mode='w'):
@@ -65,7 +58,7 @@ class Db:
 
     def load_series(self, dirpath):
         db_path = Db.get_series_db_path(dirpath)
-        self.__series_db = _load_yaml_file(db_path)
+        self.__series_db = load_yaml_file(db_path)
 
     def get_next_in_series(self):
         for show in self.__series_db:
@@ -95,7 +88,7 @@ class Db:
         return os.path.join(dirpath, '.videos.yaml')
 
     def load_global_record(self):
-        self.__series_db = _load_yaml_file(Db.get_global_record_db_path())
+        self.__series_db = load_yaml_file(Db.get_global_record_db_path())
 
     def filter_global_record(self, filter_expression):
         return filter(filter_expression, self.__series_db)

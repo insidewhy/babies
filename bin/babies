@@ -14,7 +14,7 @@ from dataclasses import dataclass
 import ffmpeg
 
 from babies.db import Db
-from babies.yaml import yaml
+from babies.yaml import yaml, load_yaml_file
 
 SHOW_EXTENSIONS = [
     'mkv',
@@ -142,6 +142,12 @@ def watch_video(path, dont_record, night_mode, sub_file):
 
     db = Db()
     video_path, video_entry = path_to_video(db, path)
+
+    options_path = os.path.join(os.path.dirname(video_path), '.watch-options.yaml')
+    if os.path.isfile(options_path):
+        options = load_yaml_file(options_path)
+        for opt_name, opt_val in options.items():
+            player[opt_name] = opt_val
 
     start_time = datetime.now()
     player.play(video_path)
