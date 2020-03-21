@@ -11,10 +11,10 @@ UNKNOWN_END = 'sometime at finished?'
 class VideoData(TypedDict, total=False):
     video: str
     viewings: List[Dict[str, str]]
+    duration: str
 
 
 VideoDb = List[VideoData]
-
 
 
 def _dump_yaml_file(filepath, data, mode='w'):
