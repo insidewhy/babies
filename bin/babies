@@ -122,12 +122,15 @@ def parse_duration(duration):
     return float(hours) * 3600 + float(mins) * 60 + float(secs)
 
 
-def watch_video(path, dont_record, night_mode):
+def watch_video(path, dont_record, night_mode, sub_file):
     player = mpv.MPV(log_handler=log_mpv, input_default_bindings=True, input_vo_keyboard=True, fullscreen=True, osc=True)
     if night_mode:
         # player['af'] = 'dynaudnorm=f=100:p=0.66'
         # player['af'] = 'dynaudnorm=f=150:g=15'
         player['af'] = 'dynaudnorm'
+
+    if sub_file:
+        player['sub-files'] = sub_file
 
     session = Session(None, None)
 
@@ -280,6 +283,7 @@ def main():
     watch.add_argument(
         '-p', '--print', action='store_true', help='print shows rather than viewing them'
     )
+    watch.add_argument('-s', '--sub-file', help='subtitle file')
 
     path_help = 'paths to video and/or directory containing series and or/video'
     record = subparsers.add_parser('record', help='record having watched video', aliases=['r'])
@@ -304,7 +308,7 @@ def main():
 
     subcommand = args.subcommand
     if subcommand is None:
-        watch_video(os.getcwd(), False, False)
+        watch_video(os.getcwd(), False, False, None)
     elif subcommand == 'create' or subcommand == 'c':
         for path in paths:
             create_show_db(path, args.force)
@@ -323,7 +327,7 @@ def main():
         dry_run = subcommand == 'dryrun' or subcommand == 'd'
         if night_mode or dry_run or print_show or subcommand == 'watch' or subcommand == 'w':
             for path in paths:
-                watch_video(path, dry_run or args.dont_record, night_mode or args.night_mode)
+                watch_video(path, dry_run or args.dont_record, night_mode or args.night_mode, args.sub_file)
 
 
 try:
