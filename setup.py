@@ -3,7 +3,7 @@ from setuptools import setup
 setup(name='babies',
       version='0.2.1',
       description='Watch shows and record your viewing history',
-      url='http://github.com/ohjames/babies',
+      url='http://github.com/insidewhy/babies',
       author='James Pike',
       author_email='github@chilon.net',
       license='MIT',
