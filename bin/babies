@@ -30,6 +30,8 @@ SHOW_EXTENSIONS = [
     'mov'
 ]
 
+OPTIONS_YAML_FILE = '.watch-options.yaml'
+
 
 @dataclass
 class Session:
@@ -124,16 +126,27 @@ def parse_duration(duration):
 
 def apply_watch_options(player, video_path) -> Optional[str]:
     run_after = None
-    options_path = os.path.join(os.path.dirname(video_path), '.watch-options.yaml')
+
+    video_dir = os.path.dirname(video_path)
+
+    options = {}
+
+    options_parent_path = os.path.join(video_dir, '..', OPTIONS_YAML_FILE)
+    if os.path.isfile(options_parent_path):
+        options.update(load_yaml_file(options_parent_path))
+
+    options_path = os.path.join(video_dir, OPTIONS_YAML_FILE)
     if os.path.isfile(options_path):
-        options = load_yaml_file(options_path)
-        for opt_name, opt_val in options.items():
-            if opt_name == 'before':
-                os.system(opt_val)
-            elif opt_name == 'after':
-                run_after = opt_val
-            else:
-                player[opt_name] = opt_val
+        options.update(load_yaml_file(options_path))
+
+    for opt_name, opt_val in options.items():
+        if opt_name == 'before':
+            os.system(opt_val)
+        elif opt_name == 'after':
+            run_after = opt_val
+        else:
+            player[opt_name] = opt_val
+
     return run_after
 
 
