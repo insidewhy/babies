@@ -56,14 +56,19 @@ def _path_to_video(db, path):
         except FileNotFoundError:
             # if there is a single video in the directory then use it
             candidates = list(filter(_is_video, os.listdir(path)))
-            if len(candidates) == 1:
+            candidate_count = len(candidates)
+            if candidate_count == 0:
+                raise ValueError(f'No videos found in directory {path}')
+            elif candidate_count == 1:
                 return os.path.join(path, candidates[0]), None
             else:
                 # TODO: allow user to select with pager?
                 raise ValueError('multiple candidates: ' + ', '.join(candidates))
 
-    else:
+    elif os.path.isfile(path):
         return path, None
+    else:
+        raise ValueError(f'No video found at {path}')
 
 
 def _format_date(date):
