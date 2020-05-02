@@ -10,8 +10,8 @@ from typing import Optional
 from dataclasses import dataclass
 import ffmpeg
 
-from babies.db import Db
-from babies.yaml import yaml, load_yaml_file
+from .db import Db
+from .yaml import yaml, load_yaml_file
 
 SHOW_EXTENSIONS = [
     'mkv',
