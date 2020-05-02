@@ -66,36 +66,6 @@ def _path_to_video(db, path):
         return path, None
 
 
-def display_video(path):
-    db = Db()
-    video_path, _ = _path_to_video(db, path)
-    print(os.path.basename(video_path))
-
-def record_video(path, comment):
-    db = Db()
-    video_path, video_entry = _path_to_video(db, path)
-    duration = _format_duration(float(ffmpeg.probe(video_path)['format']['duration']))
-
-    video_filename = os.path.basename(video_path)
-    start = 'unknown at ' + _format_duration(0)
-    end = 'unknown at ' + duration
-    db.append_global_record({
-        'video': video_filename,
-        'duration': duration,
-        'start': start,
-        'end': end,
-        'comment': comment,
-    })
-    print('recorded ' + video_filename + ' in global log with comment: ' + comment)
-
-    if video_entry:
-        video_entry['duration'] = duration
-        viewings = video_entry.setdefault('viewings', [])
-        viewings.append({'start': start, 'end': end, 'comment': comment})
-        db.write_series(path)
-        print('recorded ' + video_filename + ' in series log with comment: ' + comment)
-
-
 def _format_date(date):
     return str(date).replace('-', '/')
 
@@ -172,6 +142,44 @@ def _read_keypresses(player):
         # cmd_thread.join()
 
     return cleanup
+
+
+def _is_video(path):
+    for suffix in SHOW_EXTENSIONS:
+        if path.endswith('.' + suffix):
+            return True
+    return False
+
+
+def display_video(path):
+    db = Db()
+    video_path, _ = _path_to_video(db, path)
+    print(os.path.basename(video_path))
+
+
+def record_video(path, comment):
+    db = Db()
+    video_path, video_entry = _path_to_video(db, path)
+    duration = _format_duration(float(ffmpeg.probe(video_path)['format']['duration']))
+
+    video_filename = os.path.basename(video_path)
+    start = 'unknown at ' + _format_duration(0)
+    end = 'unknown at ' + duration
+    db.append_global_record({
+        'video': video_filename,
+        'duration': duration,
+        'start': start,
+        'end': end,
+        'comment': comment,
+    })
+    print('recorded ' + video_filename + ' in global log with comment: ' + comment)
+
+    if video_entry:
+        video_entry['duration'] = duration
+        viewings = video_entry.setdefault('viewings', [])
+        viewings.append({'start': start, 'end': end, 'comment': comment})
+        db.write_series(path)
+        print('recorded ' + video_filename + ' in series log with comment: ' + comment)
 
 
 def watch_video(path, dont_record, night_mode, sub_file):
@@ -263,13 +271,6 @@ def watch_video(path, dont_record, night_mode, sub_file):
             print('recorded video in series record:', video_filename)
 
 
-def _is_video(path):
-    for suffix in SHOW_EXTENSIONS:
-        if path.endswith('.' + suffix):
-            return True
-    return False
-
-
 def create_show_db(dirpath, force):
     db = Db()
 
@@ -295,5 +296,3 @@ def grep_show_record(terms, quiet):
         print('\n'.join(list(map(lambda m: m['video'], matches))))
     else:
         yaml.dump(list(matches), sys.stdout)
-
-
