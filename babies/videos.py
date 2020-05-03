@@ -156,15 +156,17 @@ def _is_video(path):
     return False
 
 
-def display_videos(paths, ignore_errors=False, verbose=False):
+def display_videos(paths, ignore_errors=False, verbose=False, no_extension_filter=False):
     db = Db()
     logs = []
 
     for path in paths:
         try:
             video_path, _ = _path_to_video(db, path, ignore_errors=ignore_errors, verbose=verbose)
-            filename = os.path.basename(video_path)
+            if not no_extension_filter and not _is_video(video_path):
+                continue
 
+            filename = os.path.basename(video_path)
             if verbose:
                 logs.append({
                     'path': path,

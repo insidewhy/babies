@@ -43,6 +43,9 @@ def main():
     print_cmd.add_argument(
         '-v', '--verbose', action='store_true', help='verbose output'
     )
+    print_cmd.add_argument(
+        '-n', '--no-extension-filter', action='store_true', help='do not filter out non-videos'
+    )
 
     path_help = 'paths to video and/or directory containing series and or/video'
     record = subparsers.add_parser('record', help='record having watched video', aliases=['r'])
@@ -76,7 +79,12 @@ def main():
     elif subcommand == 'record' or subcommand == 'r':
         record_video(args.path, args.comment)
     elif subcommand == 'print' or subcommand == 'p':
-        display_videos(paths, ignore_errors=args.ignore_errors, verbose=args.verbose)
+        display_videos(
+            paths,
+            ignore_errors=args.ignore_errors,
+            verbose=args.verbose,
+            no_extension_filter=args.no_extension_filter
+        )
     else:
         night_mode = subcommand == 'night' or subcommand == 'n'
         dry_run = subcommand == 'dryrun' or subcommand == 'd'
