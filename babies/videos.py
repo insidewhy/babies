@@ -126,7 +126,25 @@ def _read_keypresses(player):
     def readchars():
         while True:
             c = readchar()
-            player.command('keypress', c)
+            if c == '\x1b':
+                # handle some escape sequences, e.g. left/right, not perfect
+                key_name = None
+                c2 = readchar()
+                if c2 == '[':
+                    c = readchar()
+                    if c == 'A':
+                        key_name = 'UP'
+                    elif c == 'B':
+                        key_name = 'DOWN'
+                    elif c == 'C':
+                        key_name = 'LEFT'
+                    elif c == 'D':
+                        key_name = 'RIGHT'
+
+                if key_name:
+                    player.command('keypress', key_name)
+            else:
+                player.command('keypress', c)
 
     is_win = sys.platform in ('win32', 'cygwin')
 
