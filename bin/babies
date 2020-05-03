@@ -4,7 +4,7 @@ import sys
 import argparse
 import os
 
-from babies.videos import watch_video, create_show_db, record_video, display_video, grep_show_record
+from babies.videos import watch_video, create_show_db, record_video, display_videos, grep_show_record
 
 def main():
     parser = argparse.ArgumentParser(description='enjoy your videos')
@@ -22,7 +22,7 @@ def main():
     )
     find.add_argument('-q', '--quiet', action='store_true', help='only show video names')
 
-    watch = subparsers.add_parser('watch', help='watch [next] show at each path', aliases=['w', 'night', 'n', 'dryrun', 'd', 'p', 'print'])
+    watch = subparsers.add_parser('watch', help='watch [next] show at each path', aliases=['w', 'night', 'n', 'dryrun', 'd'])
     watch.add_argument('paths', help=paths_help, nargs='*')
     watch.add_argument(
         '-d', '--dont-record', action='store_true', help='don\'t write to series or global records'
@@ -34,6 +34,15 @@ def main():
         '-p', '--print', action='store_true', help='print shows rather than viewing them'
     )
     watch.add_argument('-s', '--sub-file', help='subtitle file')
+
+    print_cmd = subparsers.add_parser('print', help='display next show at path', aliases=['p'])
+    print_cmd.add_argument('paths', help=paths_help, nargs='*')
+    print_cmd.add_argument(
+        '-i', '--ignore-errors', action='store_true', help='ignore directories with no videos'
+    )
+    print_cmd.add_argument(
+        '-v', '--verbose', action='store_true', help='verbose output'
+    )
 
     path_help = 'paths to video and/or directory containing series and or/video'
     record = subparsers.add_parser('record', help='record having watched video', aliases=['r'])
@@ -66,13 +75,9 @@ def main():
         grep_show_record(args.search_terms, args.quiet)
     elif subcommand == 'record' or subcommand == 'r':
         record_video(args.path, args.comment)
+    elif subcommand == 'print' or subcommand == 'p':
+        display_videos(paths, ignore_errors=args.ignore_errors, verbose=args.verbose)
     else:
-        print_show = subcommand == 'print' or subcommand == 'p'
-        if print_show or args.print:
-            for path in paths:
-                display_video(path)
-            return
-
         night_mode = subcommand == 'night' or subcommand == 'n'
         dry_run = subcommand == 'dryrun' or subcommand == 'd'
         if night_mode or dry_run or print_show or subcommand == 'watch' or subcommand == 'w':

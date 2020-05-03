@@ -40,7 +40,7 @@ def _log_mpv(loglevel, component, message):
     print('\r[{}] {}: {}'.format(loglevel, component, message))
 
 
-def _path_to_video(db, path):
+def _path_to_video(db, path, ignore_errors=False, verbose=False):
     """
         If path is a directory then load series into db and return next
         unwatched show else return path to file
@@ -156,10 +156,31 @@ def _is_video(path):
     return False
 
 
-def display_video(path):
+def display_videos(paths, ignore_errors=False, verbose=False):
     db = Db()
-    video_path, _ = _path_to_video(db, path)
-    print(os.path.basename(video_path))
+    logs = []
+
+    for path in paths:
+        try:
+            video_path, _ = _path_to_video(db, path, ignore_errors=ignore_errors, verbose=verbose)
+            filename = os.path.basename(video_path)
+
+            if verbose:
+                logs.append({
+                    'path': path,
+                    'filename': filename
+                })
+            else:
+                logs.append(filename)
+        except ValueError as e:
+            if not ignore_errors:
+                raise e
+
+    if verbose:
+        yaml.dump(logs, sys.stdout)
+    else:
+        for log in logs:
+            print(log)
 
 
 def record_video(path, comment):
