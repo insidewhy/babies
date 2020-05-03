@@ -122,7 +122,7 @@ def _apply_watch_options(player, video_path) -> Optional[str]:
     return run_after
 
 
-def _read_keypresses(player):
+def _read_keypresses_for_tty(player):
     def readchars():
         while True:
             c = readchar()
@@ -165,6 +165,26 @@ def _read_keypresses(player):
         # cmd_thread.join()
 
     return cleanup
+
+
+def _read_keypresses_for_non_tty(player):
+    def readlines():
+        while True:
+            line = sys.stdin.readline().strip()
+            for cmd in line.split():
+                player.command('keypress', cmd)
+
+    cmd_thread = Thread(target=readlines)
+    cmd_thread.daemon = True
+    cmd_thread.start()
+
+
+def _read_keypresses(player):
+    if sys.stdin.isatty():
+        return _read_keypresses_for_tty(player)
+    else:
+        _read_keypresses_for_non_tty(player)
+        return None
 
 
 def _is_video(path):
@@ -274,9 +294,7 @@ def watch_video(path, dont_record, night_mode, sub_file):
 
     player.show_text(video_filename + ' (' + _format_duration(start_position) + ' / ' + duration + ')' , 2000)
 
-    cleanup_key_handler = None
-    if sys.stdin.isatty():
-        cleanup_key_handler = _read_keypresses(player)
+    cleanup_key_handler = _read_keypresses(player)
 
     # wait for video to end
     player.wait_for_playback()
