@@ -5,6 +5,7 @@ import argparse
 import os
 
 from babies.videos import watch_video, create_show_db, record_video, display_videos, grep_show_record
+from babies.youtube import search_youtube
 
 def main():
     parser = argparse.ArgumentParser(description='enjoy your videos')
@@ -52,6 +53,11 @@ def main():
     record.add_argument('path', help=path_help, type=str)
     record.add_argument('comment', help='comment to record with video', type=str)
 
+    search_youtube_cmd = subparsers.add_parser('search_youtube', help='search youtube', aliases=['syt'])
+    search_youtube_cmd.add_argument(
+        'search_terms', help='youtube search terms', nargs='+'
+    )
+
     argv = sys.argv[1:]
     # if the first argument is a file then prepend the "watch" command
     if len(argv) and '.' in argv[0]:
@@ -85,6 +91,8 @@ def main():
             verbose=args.verbose,
             no_extension_filter=args.no_extension_filter
         )
+    elif subcommand == 'search_youtube' or subcommand == 'syt':
+        search_youtube(args.search_terms)
     else:
         night_mode = subcommand == 'night' or subcommand == 'n'
         dry_run = subcommand == 'dryrun' or subcommand == 'd'

@@ -40,12 +40,18 @@ def _log_mpv(loglevel, component, message):
     print('\r[{}] {}: {}'.format(loglevel, component, message))
 
 
+def is_url(path: str) -> bool:
+    return path.startswith('https://') or path.startswith('http://')
+
+
 def _path_to_video(db, path, ignore_errors=False, verbose=False):
     """
         If path is a directory then load series into db and return next
         unwatched show else return path to file
     """
-    if os.path.isdir(path):
+    if is_url(path):
+        return path, None
+    elif os.path.isdir(path):
         try:
             db.load_series(path)
             video_entry = db.get_next_in_series()
@@ -223,12 +229,16 @@ def display_videos(paths, ignore_errors=False, verbose=False, no_extension_filte
             print(log)
 
 
+def get_video_entry_for_log(video_path: str) -> str:
+    return video_path if is_url(video_path) else os.path.basename(video_path)
+
+
 def record_video(path, comment):
     db = Db()
     video_path, video_entry = _path_to_video(db, path)
     duration = _format_duration(float(ffmpeg.probe(video_path)['format']['duration']))
 
-    video_filename = os.path.basename(video_path)
+    video_filename = get_video_entry_for_log(video_path)
     start = 'unknown at ' + _format_duration(0)
     end = 'unknown at ' + duration
     db.append_global_record({
@@ -289,7 +299,7 @@ def watch_video(path, dont_record, night_mode, sub_file):
         start_position = _parse_duration(final_viewing)
         player.seek(start_position)
 
-    video_filename = os.path.basename(video_path)
+    video_filename = get_video_entry_for_log(video_path)
     duration = _format_duration(session.duration)
 
     player.show_text(video_filename + ' (' + _format_duration(start_position) + ' / ' + duration + ')' , 2000)

@@ -11,6 +11,8 @@ babies = {editable = true,path = "."}
 ffmpeg-python = "*"
 readchar = "*"
 ruamel-yaml = "*"
+pyxdg = "*"
+requests = "*"
 
 [requires]
 python_version = "3.8"
