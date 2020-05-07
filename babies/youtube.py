@@ -18,7 +18,7 @@ def _get_api_key():
     return api_key
 
 
-def search_youtube(search_terms: List[str]):
+def search_youtube(search_terms: List[str], duration: str):
     api_key = _get_api_key()
 
     results = requests.get(
@@ -26,8 +26,9 @@ def search_youtube(search_terms: List[str]):
             "part": "snippet",
             "type": "video",
             "q": " ".join(search_terms),
-            "maxResults": 25,
+            "maxResults": 50,
             "key": api_key,
+            "videoDuration": duration or "any"
         }
     )
 

@@ -57,6 +57,9 @@ def main():
     search_youtube_cmd.add_argument(
         'search_terms', help='youtube search terms', nargs='+'
     )
+    search_youtube_cmd.add_argument(
+        '-d', '--duration', help='duration (any, long, medium, short)', type=str
+    )
 
     argv = sys.argv[1:]
     # if the first argument is a file then prepend the "watch" command
@@ -92,7 +95,7 @@ def main():
             no_extension_filter=args.no_extension_filter
         )
     elif subcommand == 'search_youtube' or subcommand == 'syt':
-        search_youtube(args.search_terms)
+        search_youtube(args.search_terms, duration=args.duration)
     else:
         night_mode = subcommand == 'night' or subcommand == 'n'
         dry_run = subcommand == 'dryrun' or subcommand == 'd'
