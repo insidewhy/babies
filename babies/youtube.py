@@ -1,5 +1,6 @@
 import sys
 import json
+import html
 from typing import List
 from xdg import BaseDirectory
 import requests
@@ -35,9 +36,9 @@ def search_youtube(search_terms: List[str], duration: str):
     def format_search_entry(entry):
         snippet = entry['snippet']
         return {
-            'title': snippet['title'],
-            'description': snippet['description'],
-            'channel title': snippet['channelTitle'],
+            'title': html.unescape(snippet['title']),
+            'description': html.unescape(snippet['description']),
+            'channel title': html.unescape(snippet['channelTitle']),
             'id': entry['id']['videoId'],
         }
 
