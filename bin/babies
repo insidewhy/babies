@@ -35,6 +35,7 @@ def main():
         '-p', '--print', action='store_true', help='print shows rather than viewing them'
     )
     watch.add_argument('-s', '--sub-file', help='subtitle file')
+    watch.add_argument('-c', '--comment', help='comment to record with video')
 
     print_cmd = subparsers.add_parser('print', help='display next show at path', aliases=['p'])
     print_cmd.add_argument('paths', help=paths_help, nargs='*')
@@ -79,7 +80,7 @@ def main():
 
     subcommand = args.subcommand
     if subcommand is None:
-        watch_video(os.getcwd(), False, False, None)
+        watch_video(os.getcwd(), False, False, None, None)
     elif subcommand == 'create' or subcommand == 'c':
         for path in paths:
             create_show_db(path, args.force)
@@ -101,7 +102,13 @@ def main():
         dry_run = subcommand == 'dryrun' or subcommand == 'd'
         if night_mode or dry_run or print_show or subcommand == 'watch' or subcommand == 'w':
             for path in paths:
-                watch_video(path, dry_run or args.dont_record, night_mode or args.night_mode, args.sub_file)
+                watch_video(
+                    path,
+                    dry_run or args.dont_record,
+                    night_mode or args.night_mode,
+                    args.sub_file,
+                    args.comment
+                )
 
 
 try:

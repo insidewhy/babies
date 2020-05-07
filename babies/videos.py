@@ -258,8 +258,14 @@ def record_video(path, comment):
         print('recorded ' + video_filename + ' in series log with comment: ' + comment)
 
 
-def watch_video(path, dont_record, night_mode, sub_file):
-    player = mpv.MPV(log_handler=_log_mpv, input_default_bindings=True, input_vo_keyboard=True, fullscreen=True, osc=True)
+def watch_video(path, dont_record, night_mode, sub_file, comment):
+    player = mpv.MPV(
+        log_handler=_log_mpv,
+        input_default_bindings=True,
+        input_vo_keyboard=True,
+        fullscreen=True,
+        osc=True
+    )
     if night_mode:
         # player['af'] = 'dynaudnorm=f=100:p=0.66'
         # player['af'] = 'dynaudnorm=f=150:g=15'
@@ -325,19 +331,25 @@ def watch_video(path, dont_record, night_mode, sub_file):
         start = _format_time_with_duration(start_time, start_position)
         end = _format_time_with_duration(end_time, session.position)
 
-        # append the global record first in case the series update fails due to full
-        # disk or readonly mount etc.
-        db.append_global_record({
+        record = {
             'video': video_filename,
             'duration': duration,
             'start': start,
             'end': end,
-        })
+        }
+        if comment:
+            record['comment'] = comment
+
+        # append the global record first in case the series update fails due to full
+        # disk or readonly mount etc.
+        db.append_global_record(record)
         print('recorded video in global record:', video_filename)
 
         if video_entry:
             if video_entry.get('duration', None) != duration:
                 video_entry['duration'] = duration
+            if comment:
+                video_entry['comment'] = comment
             viewings = video_entry.setdefault('viewings', [])
 
             viewings.append({'start': start, 'end': end})
