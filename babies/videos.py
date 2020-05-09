@@ -4,7 +4,7 @@ import os
 import re
 from readchar import readchar
 import termios
-from threading import Thread
+from threading import Thread, Condition
 from datetime import datetime
 from typing import Optional
 from dataclasses import dataclass
@@ -267,6 +267,36 @@ def record_video(path, comment):
         print('recorded ' + video_filename + ' in series log with comment: ' + comment)
 
 
+def wait_for_duration_or_terminate(player):
+    done_condition = Condition()
+    data = {}
+
+    # get duration of video
+    def wait_for_duration():
+        def set_duration(x):
+            if x:
+                data['duration'] = x
+                return True
+        player.wait_for_property('duration', set_duration, False)
+        with done_condition:
+            done_condition.notify_all()
+
+    def wait_for_playback():
+        player.wait_for_playback()
+        with done_condition:
+            done_condition.notify_all()
+
+    duration_thread = Thread(target=wait_for_duration)
+    playback_thread = Thread(target=wait_for_playback)
+    duration_thread.daemon = True
+    duration_thread.start()
+    playback_thread.start()
+
+    with done_condition:
+        done_condition.wait()
+        return data.get('duration')
+
+
 def watch_video(path, dont_record, night_mode, sub_file, comment):
     player = mpv.MPV(
         log_handler=_log_mpv,
@@ -297,18 +327,17 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
     run_after = _apply_watch_options(player, video_path)
 
     start_time = datetime.now()
+    cleanup_key_handler = None
 
     try:
         player.play(video_path)
         viewings = video_entry and video_entry.get('viewings', None)
 
-        # get duration of video
-        def set_duration(x):
-            if x:
-                session.duration = x
-                return True
-        player.wait_for_property('duration', set_duration, False)
+        duration = wait_for_duration_or_terminate(player)
+        if not duration:
+            return
 
+        session.duration = duration
         start_position = 0
         # once the duration has been read it seems to be safe to seek
         if viewings:
