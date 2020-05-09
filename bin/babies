@@ -41,7 +41,7 @@ def main():
 
     enqueue = subparsers.add_parser('enqueue', help='enqueue shows', aliases=['e'])
     enqueue.add_argument('queue_path', help='directory to story queue in')
-    enqueue.add_argument('paths', help=paths_help, nargs='*')
+    enqueue.add_argument('paths', help=paths_help, nargs='+')
     enqueue.add_argument('-c', '--comment', help='comment to record with video(s)')
 
     print_cmd = subparsers.add_parser('print', help='display next show at path', aliases=['p'])
