@@ -108,7 +108,6 @@ def _format_time_with_duration(time, duration):
 
 def _parse_duration(duration):
     hours, mins, secs = duration.split(':')
-    print(duration, float(hours) * 3600 * float(mins) * 60 + float(secs))
     return float(hours) * 3600 + float(mins) * 60 + float(secs)
 
 
