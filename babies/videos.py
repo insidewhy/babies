@@ -8,6 +8,7 @@ from threading import Thread, Condition
 from datetime import datetime
 from typing import Optional
 from dataclasses import dataclass
+from math import floor
 import ffmpeg
 
 from .db import Db
@@ -93,12 +94,12 @@ def _format_date(date):
 def _format_duration(duration):
     hours, min_secs = divmod(duration, 3600)
     mins, secs = divmod(min_secs, 60)
-    fract = round((secs % 1) * 1000)
+    fract = floor((secs % 1) * 1000)
 
     def timecomp(comp):
-        return str(round(comp)).zfill(2)
+        return str(floor(comp)).zfill(2)
 
-    return str(round(hours)) + ':' + timecomp(mins) + ':' + timecomp(secs) + '.' + str(fract)
+    return str(floor(hours)) + ':' + timecomp(mins) + ':' + timecomp(secs) + '.' + str(fract)
 
 
 def _format_time_with_duration(time, duration):
