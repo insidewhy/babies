@@ -4,7 +4,9 @@ import sys
 import argparse
 import os
 
-from babies.videos import watch_video, create_show_db, record_video, display_videos, grep_show_record
+from babies.videos import (
+    watch_video, create_show_db, record_video, display_videos, grep_show_record, enqueue_videos
+)
 from babies.youtube import search_youtube
 
 def main():
@@ -35,7 +37,12 @@ def main():
         '-p', '--print', action='store_true', help='print shows rather than viewing them'
     )
     watch.add_argument('-s', '--sub-file', help='subtitle file')
-    watch.add_argument('-c', '--comment', help='comment to record with video')
+    watch.add_argument('-c', '--comment', help='comment to record with video(s)')
+
+    enqueue = subparsers.add_parser('enqueue', help='enqueue shows', aliases=['e'])
+    enqueue.add_argument('queue_path', help='directory to story queue in')
+    enqueue.add_argument('paths', help=paths_help, nargs='*')
+    enqueue.add_argument('-c', '--comment', help='comment to record with video(s)')
 
     print_cmd = subparsers.add_parser('print', help='display next show at path', aliases=['p'])
     print_cmd.add_argument('paths', help=paths_help, nargs='*')
@@ -88,6 +95,8 @@ def main():
         grep_show_record(args.search_terms, args.quiet)
     elif subcommand == 'record' or subcommand == 'r':
         record_video(args.path, args.comment)
+    elif subcommand == 'enqueue' or subcommand == 'e':
+        enqueue_videos(args.queue_path, paths, args.comment)
     elif subcommand == 'print' or subcommand == 'p':
         display_videos(
             paths,

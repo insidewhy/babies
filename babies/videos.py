@@ -382,3 +382,19 @@ def grep_show_record(terms, quiet):
         print('\n'.join(list(map(lambda m: m['video'], matches))))
     else:
         yaml.dump(list(matches), sys.stdout)
+
+def enqueue_videos(queue_path, videos, comment=None):
+    db = Db()
+    db.load_series(queue_path, allow_empty=True)
+
+    entry_template = {}
+    if comment:
+        entry_template['comment'] = comment
+
+    for video in videos:
+        if _is_video(video):
+            entry = entry_template.copy()
+            entry['video'] = video
+            db.add_show_to_series(entry)
+
+    db.write_series(queue_path)

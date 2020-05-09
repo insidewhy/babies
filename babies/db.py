@@ -56,9 +56,12 @@ class Db:
         self.__series_db: VideoDb = []
         self.__db: VideoDb = []
 
-    def load_series(self, dirpath):
+    def load_series(self, dirpath, allow_empty=False):
         db_path = Db.get_series_db_path(dirpath)
-        self.__series_db = load_yaml_file(db_path)
+        try:
+            self.__series_db = load_yaml_file(db_path)
+        except FileNotFoundError:
+            self.__series_db = []
 
     def get_next_in_series(self):
         for show in self.__series_db:
