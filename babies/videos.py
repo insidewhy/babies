@@ -53,8 +53,7 @@ def _path_to_video(db, path, ignore_errors=False, verbose=False):
     if _is_url(path):
         return path, None, None
     elif os.path.isdir(path):
-        try:
-            db.load_series(path)
+        if db.load_series(path):
             video_entry = db.get_next_in_series()
             if not video_entry:
                 raise ValueError('series is complete')
@@ -69,7 +68,7 @@ def _path_to_video(db, path, ignore_errors=False, verbose=False):
                 video_path = os.path.join(path, video_entry['video'])
 
             return video_path, video_entry, aliased_db
-        except FileNotFoundError:
+        else:
             # if there is a single video in the directory then use it
             candidates = list(filter(_is_video, os.listdir(path)))
             candidate_count = len(candidates)
