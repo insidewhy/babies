@@ -40,7 +40,7 @@ def _log_mpv(loglevel, component, message):
     print('\r[{}] {}: {}'.format(loglevel, component, message))
 
 
-def is_url(path: str) -> bool:
+def _is_url(path: str) -> bool:
     return path.startswith('https://') or path.startswith('http://')
 
 
@@ -49,7 +49,7 @@ def _path_to_video(db, path, ignore_errors=False, verbose=False):
         If path is a directory then load series into db and return next
         unwatched show else return path to file
     """
-    if is_url(path):
+    if _is_url(path):
         return path, None
     elif os.path.isdir(path):
         try:
@@ -230,7 +230,7 @@ def display_videos(paths, ignore_errors=False, verbose=False, no_extension_filte
 
 
 def get_video_entry_for_log(video_path: str) -> str:
-    return video_path if is_url(video_path) else os.path.basename(video_path)
+    return video_path if _is_url(video_path) else os.path.basename(video_path)
 
 
 def record_video(path, comment):
@@ -385,7 +385,7 @@ def grep_show_record(terms, quiet):
     else:
         yaml.dump(list(matches), sys.stdout)
 
-def enqueue_videos(queue_path, videos, comment=None):
+def enqueue_videos(queue_path, paths, comment=None):
     db = Db()
     db.load_series(queue_path, allow_empty=True)
 
@@ -393,10 +393,21 @@ def enqueue_videos(queue_path, videos, comment=None):
     if comment:
         entry_template['comment'] = comment
 
-    for video in videos:
-        if _is_video(video):
+    for path in paths:
+        if _is_url(path) or _is_video(path):
             entry = entry_template.copy()
-            entry['video'] = video
+            entry['video'] = path
             db.add_show_to_series(entry)
+        elif os.path.isdir(path):
+            series_db = Db()
+            if series_db.load_series(path):
+                # TODO: skip entries that are already enqueued, e.g.
+                # first queue episode 1, then episode 2
+                next_entry = series_db.get_next_in_series()
+                if next_entry:
+                    entry = entry_template.copy()
+                    entry['alias'] = path
+                    entry['video'] = next_entry['video']
+                    db.add_show_to_series(entry)
 
     db.write_series(queue_path)
