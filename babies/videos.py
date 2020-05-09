@@ -339,6 +339,8 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
         }
         if comment:
             record['comment'] = comment
+        elif 'comment' in video_entry:
+            record['comment'] = video_entry['comment']
 
         # append the global record first in case the series update fails due to full
         # disk or readonly mount etc.
