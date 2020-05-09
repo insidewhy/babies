@@ -407,7 +407,7 @@ def enqueue_videos(queue_path, paths, comment=None):
                 # TODO: skip entries that are already enqueued, e.g.
                 # first queue episode 1, then episode 2
                 next_entry = series_db.get_next_in_series()
-                if next_entry:
+                if next_entry and 'alias' not in next_entry:
                     entry = entry_template.copy()
                     entry['alias'] = path
                     entry['video'] = next_entry['video']
