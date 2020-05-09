@@ -267,7 +267,7 @@ def record_video(path, comment):
         print('recorded ' + video_filename + ' in series log with comment: ' + comment)
 
 
-def wait_for_duration_or_terminate(player):
+def _wait_for_duration_or_terminate(player):
     done_condition = Condition()
     data = {}
 
@@ -333,7 +333,7 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
         player.play(video_path)
         viewings = video_entry and video_entry.get('viewings', None)
 
-        duration = wait_for_duration_or_terminate(player)
+        duration = _wait_for_duration_or_terminate(player)
         if not duration:
             return
 
