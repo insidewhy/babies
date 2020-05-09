@@ -288,38 +288,41 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
     run_after = _apply_watch_options(player, video_path)
 
     start_time = datetime.now()
-    player.play(video_path)
-    viewings = video_entry and video_entry.get('viewings', None)
 
-    # get duration of video
-    def set_duration(x):
-        if x:
-            session.duration = x
-            return True
-    player.wait_for_property('duration', set_duration, False)
+    try:
+        player.play(video_path)
+        viewings = video_entry and video_entry.get('viewings', None)
 
-    start_position = 0
-    # once the duration has been read it seems to be safe to seek
-    if viewings:
-        final_viewing = viewings[-1]['end'].split(' at ')[1]
-        start_position = _parse_duration(final_viewing)
-        player.seek(start_position)
+        # get duration of video
+        def set_duration(x):
+            if x:
+                session.duration = x
+                return True
+        player.wait_for_property('duration', set_duration, False)
 
-    video_filename = get_video_entry_for_log(video_path)
-    duration = _format_duration(session.duration)
+        start_position = 0
+        # once the duration has been read it seems to be safe to seek
+        if viewings:
+            final_viewing = viewings[-1]['end'].split(' at ')[1]
+            start_position = _parse_duration(final_viewing)
+            player.seek(start_position)
 
-    player.show_text(video_filename + ' (' + _format_duration(start_position) + ' / ' + duration + ')' , 2000)
+        video_filename = get_video_entry_for_log(video_path)
+        duration = _format_duration(session.duration)
 
-    cleanup_key_handler = _read_keypresses(player)
+        player.show_text(video_filename + ' (' + _format_duration(start_position) + ' / ' + duration + ')' , 2000)
 
-    # wait for video to end
-    player.wait_for_playback()
+        cleanup_key_handler = _read_keypresses(player)
 
-    if run_after:
-        os.system(run_after)
+        # wait for video to end
+        player.wait_for_playback()
 
-    if cleanup_key_handler:
-        cleanup_key_handler()
+    finally:
+        if run_after:
+            os.system(run_after)
+
+        if cleanup_key_handler:
+            cleanup_key_handler()
 
     # process video finishing
     end_time = datetime.now()
