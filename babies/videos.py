@@ -50,15 +50,24 @@ def _path_to_video(db, path, ignore_errors=False, verbose=False):
         unwatched show else return path to file
     """
     if _is_url(path):
-        return path, None
+        return path, None, None
     elif os.path.isdir(path):
         try:
             db.load_series(path)
             video_entry = db.get_next_in_series()
             if not video_entry:
                 raise ValueError('series is complete')
-            video_path = os.path.join(path, video_entry['video'])
-            return video_path, video_entry
+
+            alias = video_entry.get('alias', None)
+            aliased_db = None
+            if alias:
+                aliased_db = Db()
+                aliased_db.load_series(alias)
+                video_path = os.path.join(path, alias, video_entry['video'])
+            else:
+                video_path = os.path.join(path, video_entry['video'])
+
+            return video_path, video_entry, aliased_db
         except FileNotFoundError:
             # if there is a single video in the directory then use it
             candidates = list(filter(_is_video, os.listdir(path)))
@@ -66,13 +75,13 @@ def _path_to_video(db, path, ignore_errors=False, verbose=False):
             if candidate_count == 0:
                 raise ValueError(f'No videos found in directory {path}')
             elif candidate_count == 1:
-                return os.path.join(path, candidates[0]), None
+                return os.path.join(path, candidates[0]), None, None
             else:
                 # TODO: allow user to select with pager?
                 raise ValueError('multiple candidates: ' + ', '.join(candidates))
 
     elif os.path.isfile(path):
-        return path, None
+        return path, None, None
     else:
         raise ValueError(f'No video found at {path}')
 
@@ -206,7 +215,7 @@ def display_videos(paths, ignore_errors=False, verbose=False, no_extension_filte
 
     for path in paths:
         try:
-            video_path, _ = _path_to_video(db, path, ignore_errors=ignore_errors, verbose=verbose)
+            video_path, _, _ = _path_to_video(db, path, ignore_errors=ignore_errors, verbose=verbose)
             if not no_extension_filter and not _is_video(video_path):
                 continue
 
@@ -235,7 +244,7 @@ def get_video_entry_for_log(video_path: str) -> str:
 
 def record_video(path, comment):
     db = Db()
-    video_path, video_entry = _path_to_video(db, path)
+    video_path, video_entry, _ = _path_to_video(db, path)
     duration = _format_duration(float(ffmpeg.probe(video_path)['format']['duration']))
 
     video_filename = get_video_entry_for_log(video_path)
@@ -283,7 +292,7 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
         player.quit()
 
     db = Db()
-    video_path, video_entry = _path_to_video(db, path)
+    video_path, video_entry, aliased_db = _path_to_video(db, path)
 
     run_after = _apply_watch_options(player, video_path)
 
@@ -360,6 +369,15 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
             viewings.append({'start': start, 'end': end})
             db.write_series(path)
             print('recorded video in series record:', video_filename)
+
+            if aliased_db:
+                next_aliased_entry = aliased_db.get_next_in_series()
+                if next_aliased_entry['video'] == video_entry['video']:
+                    aliased_viewings = next_aliased_entry.setdefault('viewings', [])
+                    aliased_viewings.append({'start': start, 'end': end})
+                    aliased_path = video_entry['alias']
+                    aliased_db.write_series(aliased_path)
+                    print('recorded video in aliased series record:', aliased_path)
 
 
 def create_show_db(dirpath, force):
