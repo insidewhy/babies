@@ -126,4 +126,4 @@ def main():
 try:
     main()
 except ValueError as err:
-    print(err.args[0])
+    print(err.args[0], file=sys.stderr)
