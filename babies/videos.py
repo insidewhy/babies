@@ -116,6 +116,7 @@ def _parse_duration(duration):
 
 
 def _apply_watch_options(player, video_path) -> Optional[str]:
+    run_before = None
     run_after = None
 
     video_dir = os.path.dirname(video_path)
@@ -132,13 +133,13 @@ def _apply_watch_options(player, video_path) -> Optional[str]:
 
     for opt_name, opt_val in options.items():
         if opt_name == 'before':
-            os.system(opt_val)
+            run_before = opt_val
         elif opt_name == 'after':
             run_after = opt_val
         else:
             player[opt_name] = opt_val
 
-    return run_after
+    return run_before, run_after
 
 
 def _read_keypresses_for_tty(player):
@@ -330,7 +331,7 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
     # let the user know what they are watching
     print(video_path, flush=True)
 
-    run_after = _apply_watch_options(player, video_path)
+    run_before, run_after = _apply_watch_options(player, video_path)
 
     start_time = datetime.now()
     cleanup_key_handler = None
@@ -342,6 +343,9 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
         duration = _wait_for_duration_or_terminate(player)
         if not duration:
             return
+
+        if run_before:
+            os.system(run_before)
 
         session.duration = duration
         start_position = 0
