@@ -6,7 +6,7 @@ from readchar import readchar
 import termios
 from threading import Thread, Condition
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Tuple
 from dataclasses import dataclass
 from math import floor
 import ffmpeg
@@ -107,7 +107,7 @@ def _parse_duration(duration):
     return float(hours) * 3600 + float(mins) * 60 + float(secs)
 
 
-def _apply_watch_options(player, video_path) -> Optional[str]:
+def _apply_watch_options(player, video_path) -> Tuple[Optional[str], Optional[str]]:
     run_before = None
     run_after = None
 

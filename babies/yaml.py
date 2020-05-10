@@ -2,7 +2,7 @@ from ruamel.yaml import YAML, YAMLError
 
 yaml = YAML(typ='safe')
 yaml.default_flow_style = False
-yaml.width = 1000
+yaml.width = 1000  # type: ignore
 yaml.sort_base_mapping_type_on_output = False  # type: ignore
 
 
