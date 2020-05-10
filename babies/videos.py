@@ -42,6 +42,19 @@ def _is_url(path: str) -> bool:
     return path.startswith('https://') or path.startswith('http://')
 
 
+def _find_candidate_in_directory(path: str) -> str:
+    # if there is a single video in the directory then use it
+    candidates = list(filter(_is_video, os.listdir(path)))
+    candidate_count = len(candidates)
+    if candidate_count == 0:
+        raise ValueError(f'No videos found in directory {path}')
+    elif candidate_count == 1:
+        return os.path.join(path, candidates[0])
+    else:
+        # TODO: allow user to select with pager?
+        raise ValueError('multiple candidates: ' + ', '.join(candidates))
+
+
 def _path_to_video(db, path, ignore_errors=False, verbose=False):
     """
         If path is a directory then load series into db and return next
@@ -66,16 +79,7 @@ def _path_to_video(db, path, ignore_errors=False, verbose=False):
 
             return video_path, video_entry, aliased_db
         else:
-            # if there is a single video in the directory then use it
-            candidates = list(filter(_is_video, os.listdir(path)))
-            candidate_count = len(candidates)
-            if candidate_count == 0:
-                raise ValueError(f'No videos found in directory {path}')
-            elif candidate_count == 1:
-                return os.path.join(path, candidates[0]), None, None
-            else:
-                # TODO: allow user to select with pager?
-                raise ValueError('multiple candidates: ' + ', '.join(candidates))
+            return _find_candidate_in_directory(path), None, None
 
     elif os.path.isfile(path):
         return path, None, None
@@ -486,5 +490,9 @@ def enqueue_videos(queue_path, paths, comment=None, prune=False):
                     entry['alias'] = path
                     entry['video'] = next_entry['video']
                     db.add_show_to_series(entry)
+            else:
+                entry = entry_template.copy()
+                entry['video'] = _find_candidate_in_directory(path)
+                db.add_show_to_series(entry)
 
     db.write_series(queue_path)
