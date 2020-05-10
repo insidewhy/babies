@@ -65,11 +65,11 @@ class Db:
             self.__series_db = []
             return False
 
-    def get_next_in_series(self):
-        for show in self.__series_db:
+    def get_next_index_in_series(self):
+        for idx, show in enumerate(self.__series_db):
             viewings = show.get('viewings', None)
             if not viewings:
-                return show
+                return idx
 
             # get duration component of end field
             final_viewing = viewings[-1]['end'].split(' at ')[1]
@@ -77,9 +77,21 @@ class Db:
             # if the final viewing didn't complete the show then it is next
             if (final_viewing != 'finished?' and
                     final_viewing != show.get('duration', None)):
-                return show
+                return idx
 
         return None
+
+    def get_next_in_series(self):
+        next_index = self.get_next_index_in_series()
+        if next_index is None:
+            return None
+        else:
+            return self.__series_db[next_index]
+
+    def prune_watched(self):
+        next_index = self.get_next_index_in_series()
+        if next_index:
+            self.__series_db = self.__series_db[next_index:]
 
     def add_show_to_series(self, video_data):
         self.__series_db.append(video_data)

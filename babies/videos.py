@@ -436,9 +436,12 @@ def grep_show_record(terms, quiet):
     else:
         yaml.dump(list(matches), sys.stdout)
 
-def enqueue_videos(queue_path, paths, comment=None):
+def enqueue_videos(queue_path, paths, comment=None, prune=False):
     db = Db()
     db.load_series(queue_path, allow_empty=True)
+
+    if prune:
+        db.prune_watched()
 
     entry_template = {}
     if comment:

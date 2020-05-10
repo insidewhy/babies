@@ -43,6 +43,9 @@ def main():
     enqueue.add_argument('queue_path', help='directory to story queue in')
     enqueue.add_argument('paths', help=paths_help, nargs='+')
     enqueue.add_argument('-c', '--comment', help='comment to record with video(s)')
+    enqueue.add_argument(
+        '-p', '--prune', action='store_true', help='prune watched videos before queuing next video'
+    )
 
     print_cmd = subparsers.add_parser('print', help='display next show at path', aliases=['p'])
     print_cmd.add_argument('paths', help=paths_help, nargs='*')
@@ -96,7 +99,7 @@ def main():
     elif subcommand == 'record' or subcommand == 'r':
         record_video(args.path, args.comment)
     elif subcommand == 'enqueue' or subcommand == 'e':
-        enqueue_videos(args.queue_path, paths, args.comment)
+        enqueue_videos(args.queue_path, paths, args.comment, args.prune)
     elif subcommand == 'print' or subcommand == 'p':
         display_videos(
             paths,
