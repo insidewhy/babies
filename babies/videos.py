@@ -372,6 +372,13 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
     if session.position is None:
         session.position = session.duration
 
+    # final status message
+    print()
+    print(
+        "end: " + _format_duration(session.position) + '/' + _format_duration(session.duration),
+        flush=True
+    )
+
     if not dont_record:
         start = _format_time_with_duration(start_time, start_position)
         end = _format_time_with_duration(end_time, session.position)
