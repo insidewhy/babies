@@ -13,6 +13,7 @@ import ffmpeg
 
 from .db import Db
 from .yaml import yaml, load_yaml_file
+from .logger import MpvLogger
 
 SHOW_EXTENSIONS = [
     'mkv',
@@ -35,15 +36,6 @@ OPTIONS_YAML_FILE = '.watch-options.yaml'
 class Session:
     duration: Optional[int]
     position: Optional[float]
-
-
-def _log_mpv(loglevel, component, message):
-    # hide empty cplayer messages
-    if component == 'cplayer' and not message:
-        return
-
-    print_file = sys.stderr if loglevel == 'error' else sys.stdout
-    print('\r[{}] {}: {}'.format(loglevel, component, message), file=print_file)
 
 
 def _is_url(path: str) -> bool:
@@ -303,8 +295,9 @@ def _wait_for_duration_or_terminate(player):
 
 
 def watch_video(path, dont_record, night_mode, sub_file, comment):
+    logger = MpvLogger()
     player = mpv.MPV(
-        log_handler=_log_mpv,
+        log_handler=logger,
         input_default_bindings=True,
         input_vo_keyboard=True,
         fullscreen=True,
@@ -328,9 +321,6 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
 
     db = Db()
     video_path, video_entry, aliased_db = _path_to_video(db, path)
-    # let the user know what they are watching
-    print(video_path, flush=True)
-
     run_before, run_after = _apply_watch_options(player, video_path)
 
     start_time = datetime.now()
@@ -343,6 +333,10 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
         duration = _wait_for_duration_or_terminate(player)
         if not duration:
             return
+
+        # let the user know what they are watching before any other logs
+        print(video_path, flush=True)
+        logger.unsuspend()
 
         if run_before:
             os.system(run_before)
