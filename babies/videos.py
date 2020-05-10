@@ -323,9 +323,7 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
     db = Db()
     video_path, video_entry, aliased_db = _path_to_video(db, path)
     # let the user know what they are watching
-    print(video_path)
-    # if called via a pipe, inform of show immediately
-    sys.stdout.flush()
+    print(video_path, flush=True)
 
     run_after = _apply_watch_options(player, video_path)
 
