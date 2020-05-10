@@ -400,6 +400,18 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
         print('recorded video in global record:', video_filename)
 
         if video_entry:
+            # reload database in case something was enqueued while the video
+            # was being watched
+            db.load_series(path)
+            video_entry_backup = video_entry
+            video_entry = db.get_next_in_series()
+            if video_entry['video'] != video_entry_backup['video']:
+                print(
+                    'Something changed while watching video, not recording entry in series record',
+                    file=sys.stderr
+                )
+                return
+
             if video_entry.get('duration', None) != duration:
                 video_entry['duration'] = duration
             if comment:
@@ -449,7 +461,7 @@ def grep_show_record(terms, quiet):
 
 def enqueue_videos(queue_path, paths, comment=None, prune=False):
     db = Db()
-    db.load_series(queue_path, allow_empty=True)
+    db.load_series(queue_path)
 
     if prune:
         db.prune_watched()

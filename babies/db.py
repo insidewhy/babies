@@ -56,7 +56,7 @@ class Db:
         self.__series_db: VideoDb = []
         self.__db: VideoDb = []
 
-    def load_series(self, dirpath, allow_empty=False) -> bool:
+    def load_series(self, dirpath) -> bool:
         db_path = Db.get_series_db_path(dirpath)
         try:
             self.__series_db = load_yaml_file(db_path)
