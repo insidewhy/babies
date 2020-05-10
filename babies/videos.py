@@ -73,9 +73,14 @@ def _path_to_video(db, path, ignore_errors=False, verbose=False):
             if alias:
                 aliased_db = Db()
                 aliased_db.load_series(alias)
-                video_path = os.path.join(path, alias, video_entry['video'])
+
+            video = video_entry['video']
+            if _is_url(video):
+                video_path = video
+            elif alias:
+                video_path = os.path.join(path, alias, video)
             else:
-                video_path = os.path.join(path, video_entry['video'])
+                video_path = os.path.join(path, video)
 
             return video_path, video_entry, aliased_db
         else:
@@ -427,6 +432,7 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
             print('recorded video in series record:', video_filename)
 
             if aliased_db:
+                # TODO: reload aliased_db in case it has changed?
                 next_aliased_entry = aliased_db.get_next_in_series()
                 if next_aliased_entry['video'] == video_entry['video']:
                     next_aliased_entry['duration'] = duration
