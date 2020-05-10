@@ -38,7 +38,12 @@ class Session:
 
 
 def _log_mpv(loglevel, component, message):
-    print('\r[{}] {}: {}'.format(loglevel, component, message))
+    # hide empty cplayer messages
+    if component == 'cplayer' and not message:
+        return
+
+    print_file = sys.stderr if loglevel == 'error' else sys.stdout
+    print('\r[{}] {}: {}'.format(loglevel, component, message), file=print_file)
 
 
 def _is_url(path: str) -> bool:
