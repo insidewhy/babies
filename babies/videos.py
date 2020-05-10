@@ -413,6 +413,7 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
             if aliased_db:
                 next_aliased_entry = aliased_db.get_next_in_series()
                 if next_aliased_entry['video'] == video_entry['video']:
+                    next_aliased_entry['duration'] = duration
                     aliased_viewings = next_aliased_entry.setdefault('viewings', [])
                     aliased_viewings.append({'start': start, 'end': end})
                     aliased_path = video_entry['alias']
