@@ -373,7 +373,7 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
         session.position = session.duration
 
     # final status message
-    print()
+    print(flush=True)
     print(
         "end: " + _format_duration(session.position) + '/' + _format_duration(session.duration),
         flush=True
