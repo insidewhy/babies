@@ -484,6 +484,7 @@ def enqueue_videos(queue_path, paths, comment=None, prune=False):
         if _is_url(path) or _is_video(path):
             entry = entry_template.copy()
             entry['video'] = path
+            print(path)
             db.add_show_to_series(entry)
         elif os.path.isdir(path):
             series_db = Db()
@@ -495,10 +496,13 @@ def enqueue_videos(queue_path, paths, comment=None, prune=False):
                     entry = entry_template.copy()
                     entry['alias'] = path
                     entry['video'] = next_entry['video']
+                    print(path)
                     db.add_show_to_series(entry)
             else:
                 entry = entry_template.copy()
-                entry['video'] = _find_candidate_in_directory(path)
+                video = _find_candidate_in_directory(path)
+                entry['video'] = video
+                print(video)
                 db.add_show_to_series(entry)
 
     db.write_series(queue_path)
