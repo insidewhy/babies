@@ -472,6 +472,7 @@ def grep_show_record(terms, quiet):
 def enqueue_videos(queue_path, paths, comment=None, prune=False):
     db = Db()
     db.load_series(queue_path)
+    new_entries = []
 
     if prune:
         db.prune_watched()
@@ -484,7 +485,7 @@ def enqueue_videos(queue_path, paths, comment=None, prune=False):
         if _is_url(path) or _is_video(path):
             entry = entry_template.copy()
             entry['video'] = path
-            print(path)
+            new_entries.append(entry)
             db.add_show_to_series(entry)
         elif os.path.isdir(path):
             series_db = Db()
@@ -496,13 +497,14 @@ def enqueue_videos(queue_path, paths, comment=None, prune=False):
                     entry = entry_template.copy()
                     entry['alias'] = path
                     entry['video'] = next_entry['video']
-                    print(path)
+                    new_entries.append(entry)
                     db.add_show_to_series(entry)
             else:
                 entry = entry_template.copy()
                 video = _find_candidate_in_directory(path)
                 entry['video'] = video
-                print(video)
+                new_entries.append(entry)
                 db.add_show_to_series(entry)
 
     db.write_series(queue_path)
+    yaml.dump(new_entries, sys.stdout)
