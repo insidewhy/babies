@@ -15,7 +15,7 @@ class MpvLogger:
         if self.suspended and not is_error:
             self.suspended_logs.append(formatted_message)
         else:
-            print(formatted_message, file=stderr if is_error else stdout)
+            print(formatted_message, end="\r\n", file=stderr if is_error else stdout)
 
     def unsuspend(self):
         self.suspended = False

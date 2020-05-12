@@ -303,6 +303,16 @@ def _wait_for_duration_or_terminate(player):
         return data.get('duration')
 
 
+def register_pause_handler(player):
+    state = { 'has_first': False }
+    def pause_handler(named, value):
+        if not state['has_first']:
+            state['has_first'] = True
+        else:
+            print('pause: ' + ('paused' if value else 'resumed'), end="\r\n", flush=True)
+    player.observe_property('pause', pause_handler)
+
+
 def watch_video(path, dont_record, night_mode, sub_file, comment):
     logger = MpvLogger()
     player = mpv.MPV(
@@ -363,6 +373,7 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
 
         player.show_text(video_filename + ' (' + _format_duration(start_position) + ' / ' + duration + ')' , 2000)
 
+        register_pause_handler(player)
         cleanup_key_handler = _read_keypresses(player)
 
         # wait for video to end
