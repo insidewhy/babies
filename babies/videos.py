@@ -484,6 +484,7 @@ def enqueue_videos(queue_path, paths, comment=None, prune=False):
     db = Db()
     db.load_series(queue_path)
     new_entries = []
+    queued_videos = db.get_series_video_set()
 
     if prune:
         db.prune_watched()
@@ -492,12 +493,20 @@ def enqueue_videos(queue_path, paths, comment=None, prune=False):
     if comment:
         entry_template['comment'] = comment
 
+    def add_new_entry(video, alias=None):
+        # don't allow duplicates
+        if video not in queued_videos:
+            entry = entry_template.copy()
+            entry['video'] = video
+            if alias:
+                entry['alias'] = alias
+            new_entries.append(entry)
+            queued_videos.add(video)
+            db.add_show_to_series(entry)
+
     for path in paths:
         if _is_url(path) or _is_video(path):
-            entry = entry_template.copy()
-            entry['video'] = path
-            new_entries.append(entry)
-            db.add_show_to_series(entry)
+            add_new_entry(path)
         elif os.path.isdir(path):
             series_db = Db()
             if series_db.load_series(path):
@@ -505,17 +514,11 @@ def enqueue_videos(queue_path, paths, comment=None, prune=False):
                 # first queue episode 1, then episode 2
                 next_entry = series_db.get_next_in_series()
                 if next_entry and 'alias' not in next_entry:
-                    entry = entry_template.copy()
-                    entry['alias'] = path
-                    entry['video'] = next_entry['video']
-                    new_entries.append(entry)
-                    db.add_show_to_series(entry)
+                    add_new_entry(next_entry['video'], path)
             else:
-                entry = entry_template.copy()
                 video = _find_candidate_in_directory(path)
-                entry['video'] = video
-                new_entries.append(entry)
-                db.add_show_to_series(entry)
+                add_new_entry(video)
 
-    db.write_series(queue_path)
+    if new_entries:
+        db.write_series(queue_path)
     yaml.dump(new_entries, sys.stdout)

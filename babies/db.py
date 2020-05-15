@@ -100,6 +100,9 @@ class Db:
         filepath = Db.get_series_db_path(dirpath)
         _dump_yaml_file(filepath, self.__series_db)
 
+    def get_series_video_set(self):
+        return set(map(lambda entry: entry['video'], self.__series_db))
+
     @staticmethod
     def get_series_db_path(dirpath):
         return os.path.join(dirpath, '.videos.yaml')
