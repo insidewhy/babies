@@ -471,7 +471,7 @@ def create_show_db(dirpath, force):
 def grep_show_record(terms, quiet):
     db = Db()
     db.load_global_record()
-    matches = db.filter_global_record(
+    matches = db.get_matching_entries(
         lambda record: all(re.search(term, record['video'], re.IGNORECASE) for term in terms)
     )
 
@@ -522,3 +522,26 @@ def enqueue_videos(queue_path, paths, comment=None, prune=False):
     if new_entries:
         db.write_series(queue_path)
     yaml.dump(new_entries, sys.stdout)
+
+
+def dequeue_videos(queue_path, paths):
+    db = Db()
+    db.load_series(queue_path)
+    videos_set = set()
+    alias_set = set()
+
+    for path in paths:
+        if _is_url(path) or _is_video(path):
+            videos_set.add(path)
+        elif os.path.isdir(path):
+            if Db.path_has_series_db(path):
+                alias_set.add(path)
+            else:
+                video = _find_candidate_in_directory(path)
+                video_set.add(video)
+
+    db.filter_db(
+        lambda entry: entry['video'] not in videos_set and
+            entry.get('alias', None) not in alias_set
+    )
+    db.write_series(queue_path)

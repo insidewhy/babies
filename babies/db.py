@@ -53,20 +53,24 @@ def _load_old_db(filepath, global_variation):
 
 class Db:
     def __init__(self):
-        self.__series_db: VideoDb = []
-        self.__db: VideoDb = []
+        self.__video_db: VideoDb = []
 
-    def load_series(self, dirpath) -> bool:
+    def load_series(self, dirpath: str) -> bool:
         db_path = Db.get_series_db_path(dirpath)
         try:
-            self.__series_db = load_yaml_file(db_path)
+            self.__video_db = load_yaml_file(db_path)
             return True
         except FileNotFoundError:
-            self.__series_db = []
+            self.__video_db = []
             return False
 
+    @staticmethod
+    def path_has_series_db(dirpath: str) -> bool:
+        db_path = Db.get_series_db_path(dirpath)
+        return os.path.isfile(db_path)
+
     def get_next_index_in_series(self):
-        for idx, show in enumerate(self.__series_db):
+        for idx, show in enumerate(self.__video_db):
             viewings = show.get('viewings', None)
             if not viewings:
                 return idx
@@ -86,38 +90,35 @@ class Db:
         if next_index is None:
             return None
         else:
-            return self.__series_db[next_index]
+            return self.__video_db[next_index]
 
     def prune_watched(self):
         next_index = self.get_next_index_in_series()
         if next_index:
-            self.__series_db = self.__series_db[next_index:]
+            self.__video_db = self.__video_db[next_index:]
 
     def add_show_to_series(self, video_data):
-        self.__series_db.append(video_data)
+        self.__video_db.append(video_data)
 
     def write_series(self, dirpath):
         filepath = Db.get_series_db_path(dirpath)
-        _dump_yaml_file(filepath, self.__series_db)
+        _dump_yaml_file(filepath, self.__video_db)
 
     def get_series_video_set(self):
-        return set(map(lambda entry: entry['video'], self.__series_db))
+        return set(map(lambda entry: entry['video'], self.__video_db))
 
     @staticmethod
     def get_series_db_path(dirpath):
         return os.path.join(dirpath, '.videos.yaml')
 
     def load_global_record(self):
-        self.__series_db = load_yaml_file(Db.get_global_record_db_path())
+        self.__video_db = load_yaml_file(Db.get_global_record_db_path())
 
-    def filter_global_record(self, filter_expression):
-        return filter(filter_expression, self.__series_db)
+    def get_matching_entries(self, filter_expression):
+        return filter(filter_expression, self.__video_db)
 
-    def add_show_to_global_record(self, record):
-        self.__db.append(record)
-
-    def write_global_record(self):
-        _dump_yaml_file(Db.get_global_record_db_path(), self.__db)
+    def filter_db(self, filter_expression):
+        self.__video_db = list(self.get_matching_entries(filter_expression))
 
     def append_global_record(self, record):
         _dump_yaml_file(Db.get_global_record_db_path(), [record], 'a')

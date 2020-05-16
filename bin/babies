@@ -5,7 +5,8 @@ import argparse
 import os
 
 from babies.videos import (
-    watch_video, create_show_db, record_video, display_videos, grep_show_record, enqueue_videos
+    watch_video, create_show_db, record_video, display_videos, grep_show_record,
+    enqueue_videos, dequeue_videos
 )
 from babies.youtube import search_youtube
 
@@ -46,6 +47,10 @@ def main():
     enqueue.add_argument(
         '-p', '--prune', action='store_true', help='prune watched videos before queuing next video'
     )
+
+    dequeue = subparsers.add_parser('dequeue', help='dequeue shows', aliases=['de'])
+    dequeue.add_argument('queue_path', help='directory with queue')
+    dequeue.add_argument('paths', help=paths_help, nargs='+')
 
     print_cmd = subparsers.add_parser('print', help='display next show at path', aliases=['p'])
     print_cmd.add_argument('paths', help=paths_help, nargs='*')
@@ -100,6 +105,8 @@ def main():
         record_video(args.path, args.comment)
     elif subcommand == 'enqueue' or subcommand == 'e':
         enqueue_videos(args.queue_path, paths, args.comment, args.prune)
+    elif subcommand == 'dequeue' or subcommand == 'de':
+        dequeue_videos(args.queue_path, paths)
     elif subcommand == 'print' or subcommand == 'p':
         display_videos(
             paths,
