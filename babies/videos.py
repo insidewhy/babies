@@ -425,7 +425,7 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
             db.load_series(path)
             video_entry_backup = video_entry
             video_entry = db.get_next_in_series()
-            if video_entry['video'] != video_entry_backup['video']:
+            if not video_entry or video_entry['video'] != video_entry_backup['video']:
                 print(
                     'Something changed while watching video, not recording entry in series record',
                     file=sys.stderr
