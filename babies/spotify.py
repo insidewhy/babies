@@ -49,13 +49,16 @@ def _format_spotify_results(results):
 
     for track in results['tracks']['items']:
         artists = list(map(lambda a: a['name'], track['artists']))
+        album = track['album']
         output = {
             'type': 'track',
             'artist': artists[0],
             'contributors': artists[1:],
-            'album': track['album']['name'],
+            'album': album['name'],
             'name': track['name'],
             'track_number': track['track_number'],
+            'uri': track['uri'],
+            'album_uri': album['uri'],
         }
         outputs.append(output)
 
