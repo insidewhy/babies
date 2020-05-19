@@ -313,7 +313,7 @@ def register_pause_handler(player):
     player.observe_property('pause', pause_handler)
 
 
-def watch_video(path, dont_record, night_mode, sub_file, comment):
+def watch_video(path, dont_record, night_mode, sub_file=None, comment=None, title=None):
     logger = MpvLogger()
     player = mpv.MPV(
         log_handler=logger,
@@ -414,6 +414,11 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
         elif video_entry and 'comment' in video_entry:
             record['comment'] = video_entry['comment']
 
+        if title:
+            record['title'] = title
+        elif video_entry and 'title' in video_entry:
+            record['title'] = video_entry['title']
+
         # append the global record first in case the series update fails due to full
         # disk or readonly mount etc.
         db.append_global_record(record)
@@ -436,6 +441,8 @@ def watch_video(path, dont_record, night_mode, sub_file, comment):
                 video_entry['duration'] = duration
             if comment:
                 video_entry['comment'] = comment
+            if title:
+                video_entry['title'] = title
             viewings = video_entry.setdefault('viewings', [])
 
             viewings.append({'start': start, 'end': end})
@@ -480,7 +487,7 @@ def grep_show_record(terms, quiet):
     else:
         yaml.dump(list(matches), sys.stdout)
 
-def enqueue_videos(queue_path, paths, comment=None, prune=False):
+def enqueue_videos(queue_path, paths, comment=None, prune=False, title=None):
     db = Db()
     db.load_series(queue_path)
     new_entries = []
@@ -492,6 +499,8 @@ def enqueue_videos(queue_path, paths, comment=None, prune=False):
     entry_template = {}
     if comment:
         entry_template['comment'] = comment
+    if title:
+        entry_template['title'] = title
 
     def add_new_entry(video, alias=None):
         # don't allow duplicates

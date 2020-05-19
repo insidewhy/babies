@@ -41,11 +41,13 @@ def main():
     )
     watch.add_argument('-s', '--sub-file', help='subtitle file')
     watch.add_argument('-c', '--comment', help='comment to record with video(s)')
+    watch.add_argument('-t', '--title', help='title to record with video(s)')
 
     enqueue = subparsers.add_parser('enqueue', help='enqueue shows', aliases=['e'])
     enqueue.add_argument('queue_path', help='directory to story queue in')
     enqueue.add_argument('paths', help=paths_help, nargs='+')
     enqueue.add_argument('-c', '--comment', help='comment to record with video(s)')
+    enqueue.add_argument('-t', '--title', help='title to record with video(s)')
     enqueue.add_argument(
         '-p', '--prune', action='store_true', help='prune watched videos before queuing next video'
     )
@@ -114,7 +116,13 @@ def main():
     elif subcommand == 'record' or subcommand == 'r':
         record_video(args.path, args.comment)
     elif subcommand == 'enqueue' or subcommand == 'e':
-        enqueue_videos(args.queue_path, paths, args.comment, args.prune)
+        enqueue_videos(
+            args.queue_path,
+            paths,
+            comment=args.comment,
+            prune=args.prune,
+            title=args.title,
+        )
     elif subcommand == 'dequeue' or subcommand == 'de':
         dequeue_videos(args.queue_path, paths)
     elif subcommand == 'print' or subcommand == 'p':
@@ -139,8 +147,9 @@ def main():
                     path,
                     dry_run or args.dont_record,
                     night_mode or args.night_mode,
-                    args.sub_file,
-                    args.comment
+                    sub_file=args.sub_file,
+                    comment=args.comment,
+                    title=args.title
                 )
 
 
