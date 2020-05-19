@@ -9,7 +9,7 @@ from .config import Config
 from .yaml import yaml
 
 
-def search_spotify(config: Config, search_terms: List[str], limit=50):
+def search_spotify(config: Config, search_terms: List[str], limit=50, raw=False):
     access_token = config.get_spotify_access_token()
 
     if not access_token:
@@ -33,6 +33,10 @@ def search_spotify(config: Config, search_terms: List[str], limit=50):
     }, headers={
         'Authorization': f'Bearer {access_token}',
     })
+
+    if raw:
+        yaml.dump(results.json(), sys.stdout)
+        return
 
     # TODO: format results
     yaml.dump(results.json(), sys.stdout)

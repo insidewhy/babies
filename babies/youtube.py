@@ -7,7 +7,7 @@ from .config import Config
 from .yaml import yaml
 
 
-def search_youtube(config: Config, search_terms: List[str], duration: str):
+def search_youtube(config: Config, search_terms: List[str], duration: str, raw=False):
     config.load()
     api_key = config.get_youtube_api_key()
 
@@ -30,6 +30,10 @@ def search_youtube(config: Config, search_terms: List[str], duration: str):
             'channel title': html.unescape(snippet['channelTitle']),
             'id': entry['id']['videoId'],
         }
+
+    if raw:
+        yaml.dump(results.json(), sys.stdout)
+        return
 
     yaml.dump(
         # json.loads(results.text)['items'],

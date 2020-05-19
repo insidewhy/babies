@@ -80,6 +80,9 @@ def main():
     search_youtube_cmd.add_argument(
         '-d', '--duration', help='duration (any, long, medium, short)', type=str
     )
+    search_youtube_cmd.add_argument(
+        '-r', '--raw', help='show raw search results', action='store_true'
+    )
 
     search_spotify_cmd = subparsers.add_parser('search_spotify', help='search spotify', aliases=['ss'])
     search_spotify_cmd.add_argument(
@@ -87,6 +90,9 @@ def main():
     )
     search_spotify_cmd.add_argument(
         '-l', '--limit', help='number of search results to return', type=int
+    )
+    search_spotify_cmd.add_argument(
+        '-r', '--raw', help='show raw search results', action='store_true'
     )
 
     argv = sys.argv[1:]
@@ -134,10 +140,10 @@ def main():
         )
     elif subcommand == 'search_youtube' or subcommand == 'syt':
         config = Config()
-        search_youtube(config, args.search_terms, duration=args.duration)
+        search_youtube(config, args.search_terms, duration=args.duration, raw=args.raw)
     elif subcommand == 'search_spotify' or subcommand == 'ss':
         config = Config()
-        search_spotify(config, args.search_terms, limit=args.limit)
+        search_spotify(config, args.search_terms, limit=args.limit, raw=args.raw)
     else:
         night_mode = subcommand == 'night' or subcommand == 'n'
         dry_run = subcommand == 'dryrun' or subcommand == 'd'
