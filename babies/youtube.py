@@ -1,26 +1,15 @@
 import sys
-import json
 import html
 from typing import List
-from xdg import BaseDirectory
 import requests
 
-from .yaml import yaml, load_yaml_file
+from .config import Config
+from .yaml import yaml
 
 
-def _get_api_key():
-    config_path = BaseDirectory.load_first_config('babies.yaml')
-    if not config_path:
-        raise ValueError('No configuration found')
-    config = load_yaml_file(config_path)
-    api_key = config['youtube-api-key']
-    if not api_key:
-        raise ValueError('No youtube-api-key configuration element found')
-    return api_key
-
-
-def search_youtube(search_terms: List[str], duration: str):
-    api_key = _get_api_key()
+def search_youtube(config: Config, search_terms: List[str], duration: str):
+    config.load()
+    api_key = config.get_youtube_api_key()
 
     results = requests.get(
         "https://www.googleapis.com/youtube/v3/search", {
@@ -44,6 +33,6 @@ def search_youtube(search_terms: List[str], duration: str):
 
     yaml.dump(
         # json.loads(results.text)['items'],
-        list(map(format_search_entry, json.loads(results.text)['items'])),
+        list(map(format_search_entry, results.json()['items'])),
         sys.stdout
     )

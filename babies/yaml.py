@@ -12,3 +12,11 @@ def load_yaml_file(filepath):
             return yaml.load(stream)
         except YAMLError as err:
             raise ValueError(*err.args)
+
+
+def save_yaml_file(filepath, data, mode='w'):
+    with open(filepath, mode) as stream:
+        try:
+            return yaml.dump(data, stream)
+        except YAMLError as err:
+            raise ValueError(*err.args)

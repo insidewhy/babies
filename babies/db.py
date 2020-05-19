@@ -1,5 +1,5 @@
 import os
-from .yaml import yaml, load_yaml_file
+from .yaml import yaml, load_yaml_file, save_yaml_file
 from ruamel.yaml import YAMLError
 from typing import List, Dict
 from mypy_extensions import TypedDict
@@ -15,14 +15,6 @@ class VideoData(TypedDict, total=False):
 
 
 VideoDb = List[VideoData]
-
-
-def _dump_yaml_file(filepath, data, mode='w'):
-    with open(filepath, mode) as stream:
-        try:
-            return yaml.dump(data, stream)
-        except YAMLError as err:
-            raise ValueError(*err.args)
 
 
 def _load_old_db(filepath, global_variation):
@@ -102,7 +94,7 @@ class Db:
 
     def write_series(self, dirpath):
         filepath = Db.get_series_db_path(dirpath)
-        _dump_yaml_file(filepath, self.__video_db)
+        save_yaml_file(filepath, self.__video_db)
 
     def get_series_video_set(self):
         return set(map(lambda entry: entry['video'], self.__video_db))
@@ -121,7 +113,7 @@ class Db:
         self.__video_db = list(self.get_matching_entries(filter_expression))
 
     def append_global_record(self, record):
-        _dump_yaml_file(Db.get_global_record_db_path(), [record], 'a')
+        save_yaml_file(Db.get_global_record_db_path(), [record], 'a')
 
     @staticmethod
     def get_global_record_db_path():
