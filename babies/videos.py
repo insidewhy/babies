@@ -288,7 +288,7 @@ def watch_video(path, dont_record, night_mode, sub_file=None, comment=None, titl
             return
 
         # let the user know what they are watching before any other logs
-        print(video_path, flush=True)
+        print(f"start: {video_path}", flush=True)
         logger.unsuspend()
 
         if run_before:
