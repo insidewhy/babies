@@ -2,12 +2,14 @@ import sys
 from xdg import BaseDirectory
 from typing import List
 from datetime import datetime, timedelta
+from threading import Lock
 import requests
 from requests.auth import HTTPBasicAuth
 import dbus
 import time
 
 from .config import Config
+from .input import read_keypresses
 from .yaml import yaml
 
 
@@ -77,21 +79,29 @@ class SpotifyPlayer:
         self.player = dbus.Interface(proxy, dbus_interface=PLAYER_URI)
         self.properties = dbus.Interface(proxy, dbus_interface='org.freedesktop.DBus.Properties')
         self.playing = None
+        self.bus_lock = Lock()
 
     def play_track(self, uri: str):
-        self.player.OpenUri(uri)
+        with self.bus_lock:
+            self.player.OpenUri(uri)
         self.playing = uri
 
+    def stop(self):
+        with self.bus_lock:
+            self.player.Stop()
+
     def __get_metadata(self):
-        return self.properties.Get(PLAYER_URI, "Metadata")
+        with self.bus_lock:
+            return self.properties.Get(PLAYER_URI, "Metadata")
 
     def __get_playback_status(self):
-        return str(self.properties.Get(PLAYER_URI, "PlaybackStatus"))
+        with self.bus_lock:
+            return str(self.properties.Get(PLAYER_URI, "PlaybackStatus"))
 
     def wait_for_track_to_start(self):
         while True:
             metadata = self.__get_metadata()
-            if str(metadata["mpris:trackid"]) == self.playing:
+            if str(metadata["mpris:trackid"]) == self.playing and self.__get_playback_status() == 'Playing':
                 break
             else:
                 time.sleep(0.05)
@@ -107,8 +117,18 @@ class SpotifyPlayer:
 
 def listen_to_tracks(tracks: List[str]):
     player = SpotifyPlayer()
+
+    def handle_keypress(key: str):
+        if key == 'q':
+            player.stop()
+
+    cleanup_key_handler = read_keypresses(handle_keypress)
+
     for track in tracks:
         player.play_track(track)
         player.wait_for_track_to_start()
         # TODO: get more data?
         player.wait_for_track_to_end()
+
+    if cleanup_key_handler:
+        cleanup_key_handler()
