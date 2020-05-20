@@ -2,8 +2,6 @@ import mpv
 import sys
 import os
 import re
-from readchar import readchar
-import termios
 from threading import Thread, Condition
 from datetime import datetime
 from typing import Optional, Tuple
@@ -14,6 +12,7 @@ import ffmpeg
 from .db import Db
 from .yaml import yaml, load_yaml_file
 from .logger import MpvLogger
+from .input import read_keypresses
 
 SHOW_EXTENSIONS = [
     'mkv',
@@ -141,71 +140,6 @@ def _apply_watch_options(player, video_path) -> Tuple[Optional[str], Optional[st
             player[opt_name] = opt_val
 
     return run_before, run_after
-
-
-def _read_keypresses_for_tty(player):
-    def readchars():
-        while True:
-            c = readchar()
-            if c == '\x1b':
-                # handle some escape sequences, e.g. left/right, not perfect
-                key_name = None
-                c2 = readchar()
-                if c2 == '[':
-                    c = readchar()
-                    if c == 'A':
-                        key_name = 'UP'
-                    elif c == 'B':
-                        key_name = 'DOWN'
-                    elif c == 'C':
-                        key_name = 'LEFT'
-                    elif c == 'D':
-                        key_name = 'RIGHT'
-
-                if key_name:
-                    player.command('keypress', key_name)
-            else:
-                player.command('keypress', c)
-
-    is_win = sys.platform in ('win32', 'cygwin')
-
-    # backup stdin settings, readchar messes with them
-    if not is_win:
-        stdin_fd = sys.stdin.fileno()
-        stdin_attr = termios.tcgetattr(stdin_fd)
-
-    cmd_thread = Thread(target=readchars)
-    cmd_thread.daemon = True
-    cmd_thread.start()
-
-    def cleanup():
-        # see above
-        if not is_win:
-            termios.tcsetattr(stdin_fd, termios.TCSADRAIN, stdin_attr)
-        # readchar blocks this, see daemon use above
-        # cmd_thread.join()
-
-    return cleanup
-
-
-def _read_keypresses_for_non_tty(player):
-    def readlines():
-        while True:
-            line = sys.stdin.readline().strip()
-            for cmd in line.split():
-                player.command('keypress', cmd)
-
-    cmd_thread = Thread(target=readlines)
-    cmd_thread.daemon = True
-    cmd_thread.start()
-
-
-def _read_keypresses(player):
-    if sys.stdin.isatty():
-        return _read_keypresses_for_tty(player)
-    else:
-        _read_keypresses_for_non_tty(player)
-        return None
 
 
 def _is_video(path):
@@ -374,7 +308,7 @@ def watch_video(path, dont_record, night_mode, sub_file=None, comment=None, titl
         player.show_text(video_filename + ' (' + _format_duration(start_position) + ' / ' + duration + ')' , 2000)
 
         register_pause_handler(player)
-        cleanup_key_handler = _read_keypresses(player)
+        cleanup_key_handler = read_keypresses(lambda key: player.command('keypress', key))
 
         # wait for video to end
         player.wait_for_playback()
