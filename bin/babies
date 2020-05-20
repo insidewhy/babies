@@ -9,7 +9,7 @@ from babies.videos import (
     enqueue_videos, dequeue_videos
 )
 from babies.youtube import search_youtube
-from babies.spotify import search_spotify
+from babies.spotify import search_spotify, listen_to_tracks
 from babies.config import Config
 
 def main():
@@ -95,6 +95,10 @@ def main():
         '-r', '--raw', help='show raw search results', action='store_true'
     )
 
+    listen_command = subparsers.add_parser('listen', help='listen to song', aliases=['l'])
+    listen_command.add_argument('tracks', help='tracks to listen to', nargs='+')
+
+
     argv = sys.argv[1:]
     # if the first argument is a file then prepend the "watch" command
     if len(argv) and '.' in argv[0]:
@@ -114,6 +118,8 @@ def main():
     subcommand = args.subcommand
     if subcommand is None:
         watch_video(os.getcwd(), False, False, None, None)
+    elif subcommand == 'listen' or subcommand == 'l':
+        listen_to_tracks(args.tracks)
     elif subcommand == 'create' or subcommand == 'c':
         for path in paths:
             create_show_db(path, args.force)

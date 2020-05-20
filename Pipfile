@@ -13,6 +13,7 @@ readchar = "*"
 ruamel-yaml = "*"
 pyxdg = "*"
 requests = "*"
+dbus-python = "*"
 
 [requires]
 python_version = "3.8"

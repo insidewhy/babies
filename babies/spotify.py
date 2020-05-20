@@ -4,9 +4,14 @@ from typing import List
 from datetime import datetime, timedelta
 import requests
 from requests.auth import HTTPBasicAuth
+import dbus
+import time
 
 from .config import Config
 from .yaml import yaml
+
+
+PLAYER_URI = 'org.mpris.MediaPlayer2.Player'
 
 
 def search_spotify(config: Config, search_terms: List[str], limit=50, raw=False):
@@ -63,3 +68,47 @@ def _format_spotify_results(results):
         outputs.append(output)
 
     return outputs
+
+
+class SpotifyPlayer:
+    def __init__(self):
+        bus = dbus.SessionBus()
+        proxy = bus.get_object('org.mpris.MediaPlayer2.spotify', '/org/mpris/MediaPlayer2')
+        self.player = dbus.Interface(proxy, dbus_interface=PLAYER_URI)
+        self.properties = dbus.Interface(proxy, dbus_interface='org.freedesktop.DBus.Properties')
+        self.playing = None
+
+    def play_track(self, uri: str):
+        self.player.OpenUri(uri)
+        self.playing = uri
+
+    def __get_metadata(self):
+        return self.properties.Get(PLAYER_URI, "Metadata")
+
+    def __get_playback_status(self):
+        return str(self.properties.Get(PLAYER_URI, "PlaybackStatus"))
+
+    def wait_for_track_to_start(self):
+        while True:
+            metadata = self.__get_metadata()
+            if str(metadata["mpris:trackid"]) == self.playing:
+                break
+            else:
+                time.sleep(0.05)
+
+    def wait_for_track_to_end(self):
+        while True:
+            metadata = self.__get_metadata()
+            if str(metadata["mpris:trackid"]) != self.playing or self.__get_playback_status() != 'Playing':
+                break
+            else:
+                time.sleep(0.1)
+
+
+def listen_to_tracks(tracks: List[str]):
+    player = SpotifyPlayer()
+    for track in tracks:
+        player.play_track(track)
+        player.wait_for_track_to_start()
+        # TODO: get more data?
+        player.wait_for_track_to_end()
