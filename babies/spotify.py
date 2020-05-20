@@ -127,8 +127,10 @@ def listen_to_tracks(tracks: List[str]):
     for track in tracks:
         player.play_track(track)
         player.wait_for_track_to_start()
+        print(f"start: {track}", flush=True)
         # TODO: get more data?
         player.wait_for_track_to_end()
+        # TODO: print(f"end: {position}/{duration}")
 
     if cleanup_key_handler:
         cleanup_key_handler()
