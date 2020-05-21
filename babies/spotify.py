@@ -1,4 +1,5 @@
 import sys
+from math import floor
 from typing import List, Optional
 from datetime import datetime, timedelta
 from threading import Lock
@@ -10,7 +11,7 @@ import time
 from .config import Config
 from .input import ReadInput
 from .yaml import yaml
-
+from .formatting import format_duration
 
 PLAYER_URI = "org.mpris.MediaPlayer2.Player"
 
@@ -111,6 +112,10 @@ class SpotifyPlayer:
             else:
                 time.sleep(0.05)
 
+    def get_duration(self):
+        metadata = self.__get_metadata()
+        return metadata["mpris:length"] / 1000000
+
     def wait_for_track_to_end(self):
         while True:
             metadata = self.__get_metadata()
@@ -144,8 +149,19 @@ def listen_to_track(read_input: ReadInput, track_uri: str):
 
     player.play_track(track_uri)
     player.wait_for_track_to_start()
+    start_at = datetime.now()
     print(f"start: {track_uri}", flush=True)
-    # TODO: get more data?
+    duration = player.get_duration()
     player.wait_for_track_to_end()
-    # TODO: print(f"end: {position}/{duration}")
+
+    # spotify always returns 0 for the dbus position method so have to estimate it
+    position = min(duration, floor((datetime.now() - start_at).total_seconds()))
+
+    # spotify client reports the song ends 1-3 seconds before it does
+    seconds_from_end = duration - position
+    if seconds_from_end <= 3:
+        time.sleep(seconds_from_end)
+        position = duration
+
+    print(f"end: {format_duration(floor(position))}/{format_duration(floor(duration))}")
     read_input.stop()

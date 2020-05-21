@@ -6,13 +6,13 @@ from threading import Thread, Condition
 from datetime import datetime
 from typing import Optional, Tuple, List
 from dataclasses import dataclass
-from math import floor
 import ffmpeg
 
 from .db import Db
 from .yaml import yaml, load_yaml_file
 from .logger import MpvLogger
 from .input import ReadInput
+from .formatting import format_duration, format_time_with_duration
 
 SHOW_EXTENSIONS = [
     "mkv",
@@ -91,33 +91,6 @@ def _path_to_video(db, path, ignore_errors=False, verbose=False):
         raise ValueError(f"No video found at {path}")
 
 
-def _format_date(date):
-    return str(date).replace("-", "/")
-
-
-def _format_duration(duration):
-    hours, min_secs = divmod(duration, 3600)
-    mins, secs = divmod(min_secs, 60)
-    fract = floor((secs % 1) * 1000)
-
-    def timecomp(comp):
-        return str(floor(comp)).zfill(2)
-
-    return (
-        str(floor(hours))
-        + ":"
-        + timecomp(mins)
-        + ":"
-        + timecomp(secs)
-        + "."
-        + str(fract)
-    )
-
-
-def _format_time_with_duration(time, duration):
-    return _format_date(time) + " at " + _format_duration(duration)
-
-
 def _parse_duration(duration):
     hours, mins, secs = duration.split(":")
     return float(hours) * 3600 + float(mins) * 60 + float(secs)
@@ -194,10 +167,10 @@ def get_video_entry_for_log(video_path: str) -> str:
 def record_video(path, comment):
     db = Db()
     video_path, video_entry, _ = _path_to_video(db, path)
-    duration = _format_duration(float(ffmpeg.probe(video_path)["format"]["duration"]))
+    duration = format_duration(float(ffmpeg.probe(video_path)["format"]["duration"]))
 
     video_filename = get_video_entry_for_log(video_path)
-    start = "unknown at " + _format_duration(0)
+    start = "unknown at " + format_duration(0)
     end = "unknown at " + duration
     db.append_global_record(
         {
@@ -324,12 +297,12 @@ def watch_video(
             player.seek(start_position)
 
         video_filename = get_video_entry_for_log(video_path)
-        duration = _format_duration(session.duration)
+        duration = format_duration(session.duration)
 
         player.show_text(
             video_filename
             + " ("
-            + _format_duration(start_position)
+            + format_duration(start_position)
             + " / "
             + duration
             + ")",
@@ -357,15 +330,15 @@ def watch_video(
     print(flush=True)
     print(
         "end: "
-        + _format_duration(session.position)
+        + format_duration(session.position)
         + "/"
-        + _format_duration(session.duration),
+        + format_duration(session.duration),
         flush=True,
     )
 
     if not dont_record:
-        start = _format_time_with_duration(start_time, start_position)
-        end = _format_time_with_duration(end_time, session.position)
+        start = format_time_with_duration(start_time, start_position)
+        end = format_time_with_duration(end_time, session.position)
 
         record = {
             "video": video_filename,

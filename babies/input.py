@@ -28,7 +28,8 @@ def _better_readchar():
 def _cleanup_readchar():
     if sys.platform.startswith("linux") or sys.platform == "darwin":
         global tty_status
-        termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, tty_status)
+        if tty_status:
+            termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, tty_status)
 
 
 class ReadInput:
