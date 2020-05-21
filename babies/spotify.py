@@ -1,5 +1,4 @@
 import sys
-from xdg import BaseDirectory
 from typing import List
 from datetime import datetime, timedelta
 from threading import Lock
@@ -13,7 +12,7 @@ from .input import read_keypresses
 from .yaml import yaml
 
 
-PLAYER_URI = 'org.mpris.MediaPlayer2.Player'
+PLAYER_URI = "org.mpris.MediaPlayer2.Player"
 
 
 def search_spotify(config: Config, search_terms: List[str], limit=50, raw=False):
@@ -23,23 +22,23 @@ def search_spotify(config: Config, search_terms: List[str], limit=50, raw=False)
         config.load()
         [client_id, client_secret] = config.get_spotify_client_id_and_secret()
 
-        results = requests.post('https://accounts.spotify.com/api/token', {
-            "grant_type": "client_credentials",
-        }, auth=HTTPBasicAuth(client_id, client_secret))
+        results = requests.post(
+            "https://accounts.spotify.com/api/token",
+            {"grant_type": "client_credentials"},
+            auth=HTTPBasicAuth(client_id, client_secret),
+        )
 
         json = results.json()
-        access_token = json['access_token']
+        access_token = json["access_token"]
 
-        expires = datetime.now() + timedelta(seconds=json['expires_in'])
+        expires = datetime.now() + timedelta(seconds=json["expires_in"])
         config.save_spotify_access_token(access_token, expires)
 
-    results = requests.get('https://api.spotify.com/v1/search', {
-        'q': ' '.join(search_terms),
-        'type': 'album,artist,track',
-        'limit': limit
-    }, headers={
-        'Authorization': f'Bearer {access_token}',
-    })
+    results = requests.get(
+        "https://api.spotify.com/v1/search",
+        {"q": " ".join(search_terms), "type": "album,artist,track", "limit": limit},
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
 
     if raw:
         yaml.dump(results.json(), sys.stdout)
@@ -50,22 +49,22 @@ def search_spotify(config: Config, search_terms: List[str], limit=50, raw=False)
 
 def _format_spotify_results(results):
     outputs = []
-    for album in results['albums']['items']:
+    for album in results["albums"]["items"]:
         # TODO:
         pass
 
-    for track in results['tracks']['items']:
-        artists = list(map(lambda a: a['name'], track['artists']))
-        album = track['album']
+    for track in results["tracks"]["items"]:
+        artists = list(map(lambda a: a["name"], track["artists"]))
+        album = track["album"]
         output = {
-            'type': 'track',
-            'artist': artists[0],
-            'contributors': artists[1:],
-            'album': album['name'],
-            'name': track['name'],
-            'track_number': track['track_number'],
-            'uri': track['uri'],
-            'album_uri': album['uri'],
+            "type": "track",
+            "artist": artists[0],
+            "contributors": artists[1:],
+            "album": album["name"],
+            "name": track["name"],
+            "track_number": track["track_number"],
+            "uri": track["uri"],
+            "album_uri": album["uri"],
         }
         outputs.append(output)
 
@@ -75,9 +74,13 @@ def _format_spotify_results(results):
 class SpotifyPlayer:
     def __init__(self):
         bus = dbus.SessionBus()
-        proxy = bus.get_object('org.mpris.MediaPlayer2.spotify', '/org/mpris/MediaPlayer2')
+        proxy = bus.get_object(
+            "org.mpris.MediaPlayer2.spotify", "/org/mpris/MediaPlayer2"
+        )
         self.player = dbus.Interface(proxy, dbus_interface=PLAYER_URI)
-        self.properties = dbus.Interface(proxy, dbus_interface='org.freedesktop.DBus.Properties')
+        self.properties = dbus.Interface(
+            proxy, dbus_interface="org.freedesktop.DBus.Properties"
+        )
         self.playing = None
         self.bus_lock = Lock()
 
@@ -101,7 +104,10 @@ class SpotifyPlayer:
     def wait_for_track_to_start(self):
         while True:
             metadata = self.__get_metadata()
-            if str(metadata["mpris:trackid"]) == self.playing and self.__get_playback_status() == 'Playing':
+            if (
+                str(metadata["mpris:trackid"]) == self.playing
+                and self.__get_playback_status() == "Playing"
+            ):
                 break
             else:
                 time.sleep(0.05)
@@ -109,7 +115,10 @@ class SpotifyPlayer:
     def wait_for_track_to_end(self):
         while True:
             metadata = self.__get_metadata()
-            if str(metadata["mpris:trackid"]) != self.playing or self.__get_playback_status() != 'Playing':
+            if (
+                str(metadata["mpris:trackid"]) != self.playing
+                or self.__get_playback_status() != "Playing"
+            ):
                 break
             else:
                 time.sleep(0.1)
@@ -119,7 +128,7 @@ def listen_to_tracks(tracks: List[str]):
     player = SpotifyPlayer()
 
     def handle_keypress(key: str):
-        if key == 'q':
+        if key == "q":
             player.stop()
 
     cleanup_key_handler = read_keypresses(handle_keypress)

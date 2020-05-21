@@ -1,11 +1,10 @@
 import os
-from .yaml import yaml, load_yaml_file, save_yaml_file
-from ruamel.yaml import YAMLError
+from .yaml import load_yaml_file, save_yaml_file
 from typing import List, Dict
 from mypy_extensions import TypedDict
 
 # set this when the end is unknown... assume it finished sometime
-UNKNOWN_END = 'sometime at finished?'
+UNKNOWN_END = "sometime at finished?"
 
 
 class VideoData(TypedDict, total=False):
@@ -19,26 +18,25 @@ VideoDb = List[VideoData]
 
 def _load_old_db(filepath, global_variation):
     db_entries = []
-    with open(filepath, 'r') as fp:
+    with open(filepath, "r") as fp:
         for _, line in enumerate(fp):
-            line = line.rstrip('\n')
+            line = line.rstrip("\n")
             video_data: VideoData = {}
 
-            if global_variation or line[0] == '*':
+            if global_variation or line[0] == "*":
                 if not global_variation:
                     # remove the *
                     line = line[1:]
 
-                start = 'sometime'
-                space_idx = line.index(' ')
-                if line[0] != ' ':
-                    start = line[:space_idx]\
-                        .replace('-', '/').replace('~', ' ')
-                video_file = line[space_idx + 1:]
-                video_data['video'] = video_file
-                video_data['viewings'] = [{'start': start, 'end': UNKNOWN_END}]
+                start = "sometime"
+                space_idx = line.index(" ")
+                if line[0] != " ":
+                    start = line[:space_idx].replace("-", "/").replace("~", " ")
+                video_file = line[space_idx + 1 :]
+                video_data["video"] = video_file
+                video_data["viewings"] = [{"start": start, "end": UNKNOWN_END}]
             else:
-                video_data['video'] = line
+                video_data["video"] = line
             db_entries.append(video_data)
     return db_entries
 
@@ -63,16 +61,17 @@ class Db:
 
     def get_next_index_in_series(self):
         for idx, show in enumerate(self.__video_db):
-            viewings = show.get('viewings', None)
+            viewings = show.get("viewings", None)
             if not viewings:
                 return idx
 
             # get duration component of end field
-            final_viewing = viewings[-1]['end'].split(' at ')[1]
+            final_viewing = viewings[-1]["end"].split(" at ")[1]
 
             # if the final viewing didn't complete the show then it is next
-            if (final_viewing != 'finished?' and
-                    final_viewing != show.get('duration', None)):
+            if final_viewing != "finished?" and final_viewing != show.get(
+                "duration", None
+            ):
                 return idx
 
         return None
@@ -97,11 +96,11 @@ class Db:
         save_yaml_file(filepath, self.__video_db)
 
     def get_series_video_set(self):
-        return set(map(lambda entry: entry['video'], self.__video_db))
+        return set(map(lambda entry: entry["video"], self.__video_db))
 
     @staticmethod
     def get_series_db_path(dirpath):
-        return os.path.join(dirpath, '.videos.yaml')
+        return os.path.join(dirpath, ".videos.yaml")
 
     def load_global_record(self):
         self.__video_db = load_yaml_file(Db.get_global_record_db_path())
@@ -113,8 +112,8 @@ class Db:
         self.__video_db = list(self.get_matching_entries(filter_expression))
 
     def append_global_record(self, record):
-        save_yaml_file(Db.get_global_record_db_path(), [record], 'a')
+        save_yaml_file(Db.get_global_record_db_path(), [record], "a")
 
     @staticmethod
     def get_global_record_db_path():
-        return os.path.expanduser('~/.videorecord.yaml')
+        return os.path.expanduser("~/.videorecord.yaml")

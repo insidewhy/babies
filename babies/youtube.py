@@ -12,23 +12,24 @@ def search_youtube(config: Config, search_terms: List[str], duration: str, raw=F
     api_key = config.get_youtube_api_key()
 
     results = requests.get(
-        "https://www.googleapis.com/youtube/v3/search", {
+        "https://www.googleapis.com/youtube/v3/search",
+        {  # type: ignore
             "part": "snippet",
             "type": "video",
             "q": " ".join(search_terms),
             "maxResults": 50,
             "key": api_key,
-            "videoDuration": duration or "any"
-        }
+            "videoDuration": duration or "any",
+        },
     )
 
     def format_search_entry(entry):
-        snippet = entry['snippet']
+        snippet = entry["snippet"]
         return {
-            'title': html.unescape(snippet['title']),
-            'description': html.unescape(snippet['description']),
-            'channel title': html.unescape(snippet['channelTitle']),
-            'id': entry['id']['videoId'],
+            "title": html.unescape(snippet["title"]),
+            "description": html.unescape(snippet["description"]),
+            "channel title": html.unescape(snippet["channelTitle"]),
+            "id": entry["id"]["videoId"],
         }
 
     if raw:
@@ -37,6 +38,6 @@ def search_youtube(config: Config, search_terms: List[str], duration: str, raw=F
 
     yaml.dump(
         # json.loads(results.text)['items'],
-        list(map(format_search_entry, results.json()['items'])),
-        sys.stdout
+        list(map(format_search_entry, results.json()["items"])),
+        sys.stdout,
     )
