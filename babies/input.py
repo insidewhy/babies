@@ -1,10 +1,34 @@
 import sys
+import tty
 from readchar import readchar
 from typing import Callable
 import termios
 from threading import Thread
 
 KeyHandler = Callable[[str], None]
+
+
+tty_status = None
+
+
+def _better_readchar():
+    if sys.platform.startswith("linux") or sys.platform == "darwin":
+        global tty_status
+        if tty_status is None:
+            fd = sys.stdin.fileno()
+            tty_status = termios.tcgetattr(fd)
+            tty.setcbreak(fd)
+
+        ch = sys.stdin.read(1)
+        return ch
+    else:
+        readchar()
+
+
+def _cleanup_readchar():
+    if sys.platform.startswith("linux") or sys.platform == "darwin":
+        global tty_status
+        termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, tty_status)
 
 
 class ReadInput:
@@ -47,13 +71,13 @@ class ReadInput:
     def __read_keypresses_for_tty(self):
         def readchars():
             while True:
-                c = readchar()
+                c = _better_readchar()
                 if c == "\x1b":
                     # handle some escape sequences, e.g. left/right, not perfect
                     key_name = None
-                    c2 = readchar()
+                    c2 = _better_readchar()
                     if c2 == "[":
-                        c = readchar()
+                        c = _better_readchar()
                         if c == "A":
                             key_name = "UP"
                         elif c == "B":
@@ -68,25 +92,11 @@ class ReadInput:
                 else:
                     self.__handle_keypress(c)
 
-        is_win = sys.platform in ("win32", "cygwin")
-
-        # backup stdin settings, readchar messes with them
-        if not is_win:
-            stdin_fd = sys.stdin.fileno()
-            stdin_attr = termios.tcgetattr(stdin_fd)
-
         cmd_thread = Thread(target=readchars)
         cmd_thread.daemon = True
         cmd_thread.start()
 
-        def cleanup():
-            # see above
-            if not is_win:
-                termios.tcsetattr(stdin_fd, termios.TCSADRAIN, stdin_attr)
-            # readchar blocks this, see daemon use above
-            # cmd_thread.join()
-
-        self.__cleanup = cleanup
+        self.__cleanup = _cleanup_readchar
 
     def __read_keypresses_for_non_tty(self):
         def readlines():

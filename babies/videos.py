@@ -256,9 +256,7 @@ def register_pause_handler(player):
         if not state["has_first"]:
             state["has_first"] = True
         else:
-            print(
-                "pause: " + ("paused" if value else "resumed"), end="\r\n", flush=True
-            )
+            print("pause: " + ("paused" if value else "resumed"), flush=True)
 
     player.observe_property("pause", pause_handler)
 
