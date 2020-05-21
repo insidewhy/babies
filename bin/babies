@@ -24,7 +24,9 @@ def main():
     paths_help = "paths to videos and/or directories containing series and or/videos"
 
     subparsers = parser.add_subparsers(title="subcommands", dest="subcommand")
-    create = subparsers.add_parser("create", help="create series db", aliases=["c"])
+    create = subparsers.add_parser(
+        "create", help="create series db from shows in a directory", aliases=["c"]
+    )
     create.add_argument("paths", help=paths_help, nargs="*")
     create.add_argument(
         "-f",
@@ -57,12 +59,6 @@ def main():
     )
     watch.add_argument(
         "-n", "--night-mode", action="store_true", help="normalise audio"
-    )
-    watch.add_argument(
-        "-p",
-        "--print",
-        action="store_true",
-        help="print shows rather than viewing them",
     )
     watch.add_argument("-s", "--sub-file", help="subtitle file")
     watch.add_argument("-c", "--comment", help="comment to record with video(s)")
