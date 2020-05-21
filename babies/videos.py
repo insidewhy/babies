@@ -12,7 +12,7 @@ import ffmpeg
 from .db import Db
 from .yaml import yaml, load_yaml_file
 from .logger import MpvLogger
-from .input import read_keypresses
+from .input import ReadInput
 
 SHOW_EXTENSIONS = [
     "mkv",
@@ -263,7 +263,15 @@ def register_pause_handler(player):
     player.observe_property("pause", pause_handler)
 
 
-def watch_video(path, dont_record, night_mode, sub_file=None, comment=None, title=None):
+def watch_video(
+    read_input: ReadInput,
+    path,
+    dont_record,
+    night_mode,
+    sub_file=None,
+    comment=None,
+    title=None,
+):
     logger = MpvLogger()
     player = mpv.MPV(
         log_handler=logger,
@@ -293,7 +301,6 @@ def watch_video(path, dont_record, night_mode, sub_file=None, comment=None, titl
     run_before, run_after = _apply_watch_options(player, video_path)
 
     start_time = datetime.now()
-    cleanup_key_handler = None
 
     try:
         player.play(video_path)
@@ -332,19 +339,15 @@ def watch_video(path, dont_record, night_mode, sub_file=None, comment=None, titl
         )
 
         register_pause_handler(player)
-        cleanup_key_handler = read_keypresses(
-            lambda key: player.command("keypress", key)
-        )
+        read_input.start(lambda key: player.command("keypress", key))
 
         # wait for video to end
         player.wait_for_playback()
 
     finally:
+        read_input.stop()
         if run_after:
             os.system(run_after)
-
-        if cleanup_key_handler:
-            cleanup_key_handler()
 
     # process video finishing
     end_time = datetime.now()

@@ -12,8 +12,9 @@ from .videos import (
     dequeue_videos,
 )
 from .youtube import search_youtube
-from .spotify import search_spotify, listen_to_tracks
+from .spotify import search_spotify, listen_to_track
 from .config import Config
+from .input import ReadInput
 
 
 def run_babies():
@@ -153,10 +154,13 @@ def run_babies():
         paths = [os.getcwd()]
 
     subcommand = args.subcommand
+    read_input = ReadInput()
+
     if subcommand is None:
-        watch_video(os.getcwd(), False, False, None, None)
+        watch_video(read_input, os.getcwd(), False, False, None, None)
     elif subcommand == "listen" or subcommand == "l":
-        listen_to_tracks(args.tracks)
+        for track in args.tracks:
+            listen_to_track(read_input, track)
     elif subcommand == "create" or subcommand == "c":
         for path in paths:
             create_show_db(path, args.force)
@@ -193,6 +197,7 @@ def run_babies():
         if night_mode or dry_run or subcommand == "watch" or subcommand == "w":
             for path in paths:
                 watch_video(
+                    read_input,
                     path,
                     dry_run or args.dont_record,
                     night_mode or args.night_mode,
@@ -201,4 +206,4 @@ def run_babies():
                     title=args.title,
                 )
 
-
+    read_input.destroy()

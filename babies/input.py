@@ -7,66 +7,94 @@ from threading import Thread
 KeyHandler = Callable[[str], None]
 
 
-def read_keypresses(handler: KeyHandler):
-    if sys.stdin.isatty():
-        return _read_keypresses_for_tty(handler)
-    else:
-        _read_keypresses_for_non_tty(handler)
-        return None
+class ReadInput:
+    def __init__(self):
+        self.__started = False
+        self.__cleanup = None
+        self.__handler = None
+        self.__keyqueue = []
 
+    def start(self, handler: KeyHandler):
+        self.__handler = handler
 
-def _read_keypresses_for_tty(handler: KeyHandler):
-    def readchars():
-        while True:
-            c = readchar()
-            if c == "\x1b":
-                # handle some escape sequences, e.g. left/right, not perfect
-                key_name = None
-                c2 = readchar()
-                if c2 == "[":
-                    c = readchar()
-                    if c == "A":
-                        key_name = "UP"
-                    elif c == "B":
-                        key_name = "DOWN"
-                    elif c == "C":
-                        key_name = "RIGHT"
-                    elif c == "D":
-                        key_name = "LEFT"
+        for key in self.__keyqueue:
+            handler(key)
+        self.__keyqueue.clear()
 
-                if key_name:
-                    handler(key_name)
-            else:
-                handler(c)
+        if not self.__started:
+            self.__read_keypresses()
 
-    is_win = sys.platform in ("win32", "cygwin")
+    def stop(self):
+        self.__handler = None
 
-    # backup stdin settings, readchar messes with them
-    if not is_win:
-        stdin_fd = sys.stdin.fileno()
-        stdin_attr = termios.tcgetattr(stdin_fd)
+    def destroy(self):
+        self.__handler = None
+        if self.__cleanup:
+            self.__cleanup()
 
-    cmd_thread = Thread(target=readchars)
-    cmd_thread.daemon = True
-    cmd_thread.start()
+    def __handle_keypress(self, key: str):
+        if self.__handler:
+            self.__handler(key)
+        else:
+            self.__keyqueue = []
 
-    def cleanup():
-        # see above
+    def __read_keypresses(self):
+        if sys.stdin.isatty():
+            self.__read_keypresses_for_tty()
+        else:
+            self.__read_keypresses_for_non_tty()
+
+    def __read_keypresses_for_tty(self):
+        def readchars():
+            while True:
+                c = readchar()
+                if c == "\x1b":
+                    # handle some escape sequences, e.g. left/right, not perfect
+                    key_name = None
+                    c2 = readchar()
+                    if c2 == "[":
+                        c = readchar()
+                        if c == "A":
+                            key_name = "UP"
+                        elif c == "B":
+                            key_name = "DOWN"
+                        elif c == "C":
+                            key_name = "RIGHT"
+                        elif c == "D":
+                            key_name = "LEFT"
+
+                    if key_name:
+                        self.__handle_keypress(key_name)
+                else:
+                    self.__handle_keypress(c)
+
+        is_win = sys.platform in ("win32", "cygwin")
+
+        # backup stdin settings, readchar messes with them
         if not is_win:
-            termios.tcsetattr(stdin_fd, termios.TCSADRAIN, stdin_attr)
-        # readchar blocks this, see daemon use above
-        # cmd_thread.join()
+            stdin_fd = sys.stdin.fileno()
+            stdin_attr = termios.tcgetattr(stdin_fd)
 
-    return cleanup
+        cmd_thread = Thread(target=readchars)
+        cmd_thread.daemon = True
+        cmd_thread.start()
 
+        def cleanup():
+            # see above
+            if not is_win:
+                termios.tcsetattr(stdin_fd, termios.TCSADRAIN, stdin_attr)
+            # readchar blocks this, see daemon use above
+            # cmd_thread.join()
 
-def _read_keypresses_for_non_tty(handler: KeyHandler):
-    def readlines():
-        while True:
-            line = sys.stdin.readline().strip()
-            for cmd in line.split():
-                handler(cmd)
+        self.__cleanup = cleanup
 
-    cmd_thread = Thread(target=readlines)
-    cmd_thread.daemon = True
-    cmd_thread.start()
+    def __read_keypresses_for_non_tty(self):
+        def readlines():
+            while True:
+                line = sys.stdin.readline().strip()
+                for cmd in line.split():
+                    self.__handle_keypress(cmd)
+
+        cmd_thread = Thread(target=readlines)
+        cmd_thread.daemon = True
+        cmd_thread.start()

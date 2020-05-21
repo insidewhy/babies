@@ -1,5 +1,5 @@
 import sys
-from typing import List
+from typing import List, Optional
 from datetime import datetime, timedelta
 from threading import Lock
 import requests
@@ -8,7 +8,7 @@ import dbus
 import time
 
 from .config import Config
-from .input import read_keypresses
+from .input import ReadInput
 from .yaml import yaml
 
 
@@ -42,9 +42,8 @@ def search_spotify(config: Config, search_terms: List[str], limit=50, raw=False)
 
     if raw:
         yaml.dump(results.json(), sys.stdout)
-        return
-
-    yaml.dump(_format_spotify_results(results.json()), sys.stdout)
+    else:
+        yaml.dump(_format_spotify_results(results.json()), sys.stdout)
 
 
 def _format_spotify_results(results):
@@ -124,22 +123,29 @@ class SpotifyPlayer:
                 time.sleep(0.1)
 
 
-def listen_to_tracks(tracks: List[str]):
-    player = SpotifyPlayer()
+player: Optional[SpotifyPlayer] = None
 
-    def handle_keypress(key: str):
-        if key == "q":
-            player.stop()
 
-    cleanup_key_handler = read_keypresses(handle_keypress)
+def handle_keypress(key: str):
+    global player
+    if not player:
+        return
 
-    for track in tracks:
-        player.play_track(track)
-        player.wait_for_track_to_start()
-        print(f"start: {track}", flush=True)
-        # TODO: get more data?
-        player.wait_for_track_to_end()
-        # TODO: print(f"end: {position}/{duration}")
+    if key == "q":
+        player.stop()
 
-    if cleanup_key_handler:
-        cleanup_key_handler()
+
+def listen_to_track(read_input: ReadInput, track_uri: str):
+    global player
+    if not player:
+        player = SpotifyPlayer()
+
+    read_input.start(handle_keypress)
+
+    player.play_track(track_uri)
+    player.wait_for_track_to_start()
+    print(f"start: {track_uri}", flush=True)
+    # TODO: get more data?
+    player.wait_for_track_to_end()
+    # TODO: print(f"end: {position}/{duration}")
+    read_input.stop()
