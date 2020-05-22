@@ -54,7 +54,7 @@ def _find_candidate_in_directory(path: str) -> str:
         raise ValueError("multiple candidates: " + ", ".join(candidates))
 
 
-def _path_to_video(db, path, ignore_errors=False, verbose=False):
+def _path_to_video(db: Db, path: str, ignore_errors=False, verbose=False):
     """
         If path is a directory then load series into db and return next
         unwatched show else return path to file
@@ -236,9 +236,9 @@ def register_pause_handler(player):
 
 def watch_video(
     read_input: ReadInput,
-    path,
-    dont_record,
-    night_mode,
+    path: str,
+    dont_record=False,
+    night_mode=False,
     sub_file=None,
     comment=None,
     title=None,
