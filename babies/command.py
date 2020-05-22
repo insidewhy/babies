@@ -2,15 +2,16 @@ import sys
 import argparse
 import os
 
-from .media import play_media
-from .videos import (
-    create_show_db,
-    record_video,
-    display_videos,
-    grep_show_record,
-    enqueue_videos,
-    dequeue_videos,
+from .media import (
+    play_media,
+    record_media,
+    print_path_to_media,
+    enqueue_media,
+    dequeue_media,
+    grep_media_record,
+    create_record_from_directory,
 )
+from .db import Db
 from .youtube import search_youtube
 from .spotify import search_spotify
 from .config import Config
@@ -163,13 +164,14 @@ def run_babies():
             play_media(read_input, track)
     elif subcommand == "create" or subcommand == "c":
         for path in paths:
-            create_show_db(path, args.force)
+            db = Db()
+            create_record_from_directory(db, path, args.force)
     elif subcommand == "find" or subcommand == "f":
-        grep_show_record(args.search_terms, args.quiet)
+        grep_media_record(args.search_terms, args.quiet)
     elif subcommand == "record" or subcommand == "r":
-        record_video(args.path, args.comment)
+        record_media(args.path, args.comment)
     elif subcommand == "enqueue" or subcommand == "e":
-        enqueue_videos(
+        enqueue_media(
             args.queue_path,
             paths,
             comment=args.comment,
@@ -177,9 +179,9 @@ def run_babies():
             title=args.title,
         )
     elif subcommand == "dequeue" or subcommand == "de":
-        dequeue_videos(args.queue_path, paths)
+        dequeue_media(args.queue_path, paths)
     elif subcommand == "print" or subcommand == "p":
-        display_videos(
+        print_path_to_media(
             paths,
             ignore_errors=args.ignore_errors,
             verbose=args.verbose,

@@ -1,7 +1,8 @@
 import os
-from .yaml import load_yaml_file, save_yaml_file
-from typing import List, Dict
+from typing import List, Dict, Optional
 from mypy_extensions import TypedDict
+
+from .yaml import load_yaml_file, save_yaml_file
 
 # set this when the end is unknown... assume it finished sometime
 UNKNOWN_END = "sometime at finished?"
@@ -44,6 +45,7 @@ def _load_old_db(filepath, global_variation):
 class Db:
     def __init__(self):
         self.__video_db: VideoDb = []
+        self.aliased_db: Optional[Db] = None
 
     def load_series(self, dirpath: str) -> bool:
         db_path = Db.get_series_db_path(dirpath)
@@ -81,7 +83,12 @@ class Db:
         if next_index is None:
             return None
         else:
-            return self.__video_db[next_index]
+            next_entry = self.__video_db[next_index]
+            alias = next_entry.get("alias", None)
+            if alias:
+                self.aliased_db = Db()
+                self.aliased_db.load_series(alias)
+            return next_entry
 
     def prune_watched(self):
         next_index = self.get_next_index_in_series()
