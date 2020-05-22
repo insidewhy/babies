@@ -5,6 +5,9 @@ jobs:
       - image: circleci/python:3.8
     working_directory: ~/repo
     steps:
+      - run:
+          name: install dbus library
+          command: sudo apt-get install libdbus-1-dev
       - checkout
       - restore_cache:
           key: v1-dependencies-{{ checksum "Pipfile.lock" }}
