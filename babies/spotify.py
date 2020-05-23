@@ -158,7 +158,12 @@ def listen_to_track(read_input: ReadInput, track_uri: str) -> Tuple[int, str, da
     player.wait_for_track_to_start()
     start_at = datetime.now()
     print(f"start: {track_uri}", flush=True)
+
     duration = player.get_duration()
+    # floor duration etc. spotify player isn't very accurate
+    formatted_duration = format_duration(floor(duration))
+    print(f"duration: {formatted_duration}", flush=True)
+
     player.wait_for_track_to_end()
 
     # spotify always returns 0 for the dbus position method so have to estimate it
@@ -170,8 +175,6 @@ def listen_to_track(read_input: ReadInput, track_uri: str) -> Tuple[int, str, da
         time.sleep(seconds_from_end)
         position = duration
 
-    # floor duration etc. spotify player isn't very accurate
-    formatted_duration = format_duration(floor(duration))
     print(f"end: {format_duration(floor(position))}/{formatted_duration}")
     read_input.stop()
 

@@ -133,6 +133,9 @@ def watch_video(
 
         # let the user know what they are watching before any other logs
         print(f"start: {video_path}", flush=True)
+
+        formatted_duration = format_duration(duration)
+        print(f"duration: {formatted_duration}", flush=True)
         logger.unsuspend()
 
         if run_before:
@@ -142,8 +145,6 @@ def watch_video(
         # once the duration has been read it seems to be safe to seek
         if start_position > 0:
             player.seek(start_position)
-
-        formatted_duration = format_duration(session.duration)
 
         player.show_text(
             display_video
