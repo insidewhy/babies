@@ -113,8 +113,15 @@ class SpotifyPlayer:
                 time.sleep(0.05)
 
     def get_duration(self):
-        metadata = self.__get_metadata()
-        return metadata["mpris:length"] / 1000000
+        while True:
+            metadata = self.__get_metadata()
+            length = metadata["mpris:length"] / 1000000
+            if length > 0:
+                return length
+            else:
+                # sometimes it takes a while after the track has started for
+                # the duration to be available
+                time.sleep(0.05)
 
     def wait_for_track_to_end(self):
         while True:
