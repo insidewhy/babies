@@ -97,7 +97,7 @@ def watch_video(
     start_position: int,
     night_mode=False,
     sub_file=None,
-):
+) -> Optional[Tuple[int, str, datetime]]:
     logger = MpvLogger()
     player = mpv.MPV(
         log_handler=logger,
@@ -129,7 +129,7 @@ def watch_video(
         player.play(video_path)
         duration = _wait_for_duration_or_terminate(player)
         if not duration:
-            return
+            return None
 
         # let the user know what they are watching before any other logs
         print(f"start: {video_path}", flush=True)

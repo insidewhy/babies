@@ -1,6 +1,6 @@
 import sys
 from math import floor
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from datetime import datetime, timedelta
 from threading import Lock
 import requests
@@ -140,7 +140,7 @@ def handle_keypress(key: str):
         player.stop()
 
 
-def listen_to_track(read_input: ReadInput, track_uri: str):
+def listen_to_track(read_input: ReadInput, track_uri: str) -> Tuple[int, str, datetime]:
     global player
     if not player:
         player = SpotifyPlayer()
@@ -163,5 +163,9 @@ def listen_to_track(read_input: ReadInput, track_uri: str):
         time.sleep(seconds_from_end)
         position = duration
 
-    print(f"end: {format_duration(floor(position))}/{format_duration(floor(duration))}")
+    # floor duration etc. spotify player isn't very accurate
+    formatted_duration = format_duration(floor(duration))
+    print(f"end: {format_duration(floor(position))}/{formatted_duration}")
     read_input.stop()
+
+    return floor(position), formatted_duration, datetime.now()

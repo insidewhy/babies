@@ -19,9 +19,11 @@ from .input import ReadInput
 
 
 def run_babies():
-    parser = argparse.ArgumentParser(description="enjoy your videos")
+    parser = argparse.ArgumentParser(description="enjoy your media")
 
-    paths_help = "paths to videos and/or directories containing series and or/videos"
+    paths_help = (
+        "paths to videos/audio and/or directories containing media queue and or/videos"
+    )
 
     subparsers = parser.add_subparsers(title="subcommands", dest="subcommand")
     create = subparsers.add_parser(

@@ -8,43 +8,24 @@ from .yaml import load_yaml_file, save_yaml_file
 UNKNOWN_END = "sometime at finished?"
 
 
-class VideoData(TypedDict, total=False):
+class MediaEntry(TypedDict, total=False):
+    audio: str
     video: str
     viewings: List[Dict[str, str]]
     duration: str
+    comment: str
+    title: str
+    alias: str
+    start: str
+    end: str
 
 
-VideoDb = List[VideoData]
-
-
-def _load_old_db(filepath, global_variation):
-    db_entries = []
-    with open(filepath, "r") as fp:
-        for _, line in enumerate(fp):
-            line = line.rstrip("\n")
-            video_data: VideoData = {}
-
-            if global_variation or line[0] == "*":
-                if not global_variation:
-                    # remove the *
-                    line = line[1:]
-
-                start = "sometime"
-                space_idx = line.index(" ")
-                if line[0] != " ":
-                    start = line[:space_idx].replace("-", "/").replace("~", " ")
-                video_file = line[space_idx + 1 :]
-                video_data["video"] = video_file
-                video_data["viewings"] = [{"start": start, "end": UNKNOWN_END}]
-            else:
-                video_data["video"] = line
-            db_entries.append(video_data)
-    return db_entries
+MediaDb = List[MediaEntry]
 
 
 class Db:
     def __init__(self):
-        self.__video_db: VideoDb = []
+        self.__video_db: MediaDb = []
         self.aliased_db: Optional[Db] = None
 
     def load_series(self, dirpath: str) -> bool:
@@ -102,8 +83,13 @@ class Db:
         filepath = Db.get_series_db_path(dirpath)
         save_yaml_file(filepath, self.__video_db)
 
-    def get_series_video_set(self):
-        return set(map(lambda entry: entry["video"], self.__video_db))
+    def get_series_media_set(self):
+        return set(
+            map(
+                lambda entry: entry.get("video", entry.get("audio", None)),
+                self.__video_db,
+            )
+        )
 
     @staticmethod
     def get_series_db_path(dirpath):

@@ -9,7 +9,7 @@ from .formatting import format_duration, format_time_with_duration
 from .videos import watch_video
 from .spotify import listen_to_track
 from .input import ReadInput
-from .db import Db
+from .db import Db, MediaEntry
 from .yaml import yaml
 
 SHOW_EXTENSIONS = [
@@ -31,8 +31,17 @@ def _is_url(path: str) -> bool:
     return path.startswith("https://") or path.startswith("http://")
 
 
-def _get_media_entry_for_log(video_path: str) -> str:
-    return video_path if _is_url(video_path) else os.path.basename(video_path)
+def _is_spotify(path: str) -> bool:
+    return path.startswith("spotify:")
+
+
+def _get_media_path(media_entry: MediaEntry) -> str:
+    video = media_entry.get("video", None)
+    return video or media_entry["audio"]
+
+
+def _get_media_entry_for_log(media_path: str) -> str:
+    return media_path if _is_url(media_path) else os.path.basename(media_path)
 
 
 def _is_video(path):
@@ -57,29 +66,33 @@ def _find_candidate_in_directory(path: str) -> str:
 
 def _path_to_media(
     db: Db, path: str, ignore_errors=False, verbose=False
-) -> Tuple[str, Optional[dict]]:
+) -> Tuple[str, Optional[MediaEntry]]:
     """
         If path is a directory then load series into db and return next
         unwatched show else return path to file
     """
-    if _is_url(path):
+    if _is_url(path) or _is_spotify(path):
         return path, None
     elif os.path.isdir(path):
         if db.load_series(path):
-            video_entry = db.get_next_in_series()
-            if not video_entry:
+            media_entry = db.get_next_in_series()
+            if not media_entry:
                 raise ValueError("series is complete")
 
-            video = video_entry["video"]
-            alias = video_entry.get("alias", None)
-            if _is_url(video):
-                video_path = video
-            elif alias:
-                video_path = os.path.join(path, alias, video)
+            audio = media_entry.get("audio", None)
+            if audio:
+                media_path = audio
             else:
-                video_path = os.path.join(path, video)
+                video = media_entry["video"]
+                alias = media_entry.get("alias", None)
+                if _is_url(video):
+                    media_path = video
+                elif alias:
+                    media_path = os.path.join(path, alias, video)
+                else:
+                    media_path = os.path.join(path, video)
 
-            return video_path, video_entry
+            return media_path, media_entry
         else:
             return _find_candidate_in_directory(path), None
 
@@ -91,10 +104,10 @@ def _path_to_media(
 
 def record_media(path, comment):
     db = Db()
-    video_path, video_entry = _path_to_media(db, path)
-    duration = format_duration(float(ffmpeg.probe(video_path)["format"]["duration"]))
+    media_path, media_entry = _path_to_media(db, path)
+    duration = format_duration(float(ffmpeg.probe(media_path)["format"]["duration"]))
 
-    video_filename = _get_media_entry_for_log(video_path)
+    video_filename = _get_media_entry_for_log(media_path)
     start = "unknown at " + format_duration(0)
     end = "unknown at " + duration
     db.append_global_record(
@@ -108,9 +121,9 @@ def record_media(path, comment):
     )
     print("recorded " + video_filename + " in global log with comment: " + comment)
 
-    if video_entry:
-        video_entry["duration"] = duration
-        viewings = video_entry.setdefault("viewings", [])
+    if media_entry:
+        media_entry["duration"] = duration
+        viewings = media_entry.setdefault("viewings", [])
         viewings.append({"start": start, "end": end, "comment": comment})
         db.write_series(path)
         print("recorded " + video_filename + " in series log with comment: " + comment)
@@ -130,95 +143,156 @@ def play_media(
     comment=None,
     title=None,
 ):
-    if uri.startswith("spotify:"):
+    if _is_spotify(uri):
         listen_to_track(read_input, uri)
     else:
         db = Db()
-        video_path, video_entry = _path_to_media(db, uri)
-        video_for_log = _get_media_entry_for_log(video_path)
+        media_path, media_entry = _path_to_media(db, uri)
+        media_log_entry = _get_media_entry_for_log(media_path)
 
         start_time = datetime.now()
-
         start_position = 0
-        viewings = video_entry and video_entry.get("viewings", None)
-        if viewings:
-            final_viewing = viewings[-1]["end"].split(" at ")[1]
-            start_position = _parse_duration(final_viewing)
 
-        position, formatted_duration, end_time = watch_video(
-            read_input,
-            uri,
-            video_path,
-            video_for_log,
-            start_position,
-            night_mode=night_mode,
-            sub_file=sub_file,
-        )
+        if _is_spotify(media_path):
+            position, formatted_duration, end_time = listen_to_track(
+                read_input, media_path
+            )
 
-        if not dont_record:
-            start = format_time_with_duration(start_time, start_position)
-            end = format_time_with_duration(end_time, position)
+            if not dont_record:
+                _record_session(
+                    db,
+                    media_entry,
+                    uri,
+                    media_log_entry,
+                    start_time,
+                    start_position,
+                    end_time,
+                    position,
+                    formatted_duration,
+                    comment=comment,
+                    title=title,
+                    is_audio=True,
+                    skip_global_record=True,
+                )
+        else:
+            if media_entry:
+                viewings = media_entry.get("viewings", None)
+                if viewings:
+                    final_viewing = viewings[-1]["end"].split(" at ")[1]
+                    start_position = _parse_duration(final_viewing)
 
-            record = {
-                "video": video_for_log,
-                "duration": formatted_duration,
-                "start": start,
-                "end": end,
-            }
-            if comment:
-                record["comment"] = comment
-            elif video_entry and "comment" in video_entry:
-                record["comment"] = video_entry["comment"]
+            watch_status = watch_video(
+                read_input,
+                uri,
+                media_path,
+                media_log_entry,
+                start_position,
+                night_mode=night_mode,
+                sub_file=sub_file,
+            )
 
-            if title:
-                record["title"] = title
-            elif video_entry and "title" in video_entry:
-                record["title"] = video_entry["title"]
+            if watch_status and not dont_record:
+                position, formatted_duration, end_time = watch_status
 
-            # append the global record first in case the series update fails due to full
-            # disk or readonly mount etc.
-            db.append_global_record(record)
-            print("recorded video in global record:", video_for_log)
+                _record_session(
+                    db,
+                    media_entry,
+                    uri,
+                    media_log_entry,
+                    start_time,
+                    start_position,
+                    end_time,
+                    position,
+                    formatted_duration,
+                    comment=comment,
+                    title=title,
+                )
 
-            if video_entry:
-                # reload database in case something was enqueued while the video
-                # was being watched
-                db.load_series(uri)
-                video_entry_backup = video_entry
-                video_entry = db.get_next_in_series()
-                if (
-                    not video_entry
-                    or video_entry["video"] != video_entry_backup["video"]
-                ):
-                    print(
-                        "Something changed while watching video, "
-                        "not recording entry in series record",
-                        file=sys.stderr,
-                    )
-                    return
 
-                if video_entry.get("duration", None) != formatted_duration:
-                    video_entry["duration"] = formatted_duration
-                if comment:
-                    video_entry["comment"] = comment
-                if title:
-                    video_entry["title"] = title
-                viewings = video_entry.setdefault("viewings", [])
+def _record_session(
+    db: Db,
+    media_entry: Optional[MediaEntry],
+    uri: str,
+    media_log_entry: str,
+    start_time: datetime,
+    start_position: int,
+    end_time: datetime,
+    position: int,
+    formatted_duration: str,
+    comment=None,
+    title=None,
+    is_audio=False,
+    skip_global_record=False,
+):
+    start = format_time_with_duration(start_time, start_position)
+    end = format_time_with_duration(end_time, position)
 
-                viewings.append({"start": start, "end": end})
-                db.write_series(uri)
-                print("recorded video in series record:", video_for_log)
+    record: MediaEntry = {
+        "duration": formatted_duration,
+        "start": start,
+        "end": end,
+    }
+    if is_audio:
+        record["audio"] = media_log_entry
+    else:
+        record["video"] = media_log_entry
 
-                if db.aliased_db:
-                    # TODO: reload aliased_db in case it has changed?
-                    next_aliased_entry = db.aliased_db.get_next_in_series()
-                    if next_aliased_entry["video"] == video_entry["video"]:
-                        next_aliased_entry["duration"] = formatted_duration
-                        aliased_viewings = next_aliased_entry.setdefault("viewings", [])
-                        aliased_viewings.append({"start": start, "end": end})
-                        aliased_path = video_entry["alias"]
-                        db.aliased_db.write_series(aliased_path)
-                        print("recorded video in aliased series record:", aliased_path)
+    if comment:
+        record["comment"] = comment
+    elif media_entry and "comment" in media_entry:
+        record["comment"] = media_entry["comment"]
+
+    if title:
+        record["title"] = title
+    elif media_entry and "title" in media_entry:
+        record["title"] = media_entry["title"]
+
+    if not skip_global_record:
+        # append the global record first in case the series update fails due to full
+        # disk or readonly mount etc.
+        db.append_global_record(record)
+        print("recorded media in global record:", media_log_entry)
+
+    if media_entry:
+        # reload database in case something was enqueued while the media
+        # was playing
+        db.load_series(uri)
+        media_entry_backup = media_entry
+        media_entry = db.get_next_in_series()
+        if not media_entry or _get_media_path(media_entry) != _get_media_path(
+            media_entry_backup
+        ):
+            print(
+                "Something changed while playing media, "
+                "not recording entry in series record",
+                file=sys.stderr,
+            )
+            return
+
+        if media_entry.get("duration", None) != formatted_duration:
+            media_entry["duration"] = formatted_duration
+        if comment:
+            media_entry["comment"] = comment
+        if title:
+            media_entry["title"] = title
+        sessions = media_entry.setdefault("viewings", [])
+
+        sessions.append({"start": start, "end": end})
+        db.write_series(uri)
+        print("recorded media in series record:", media_log_entry)
+
+        if db.aliased_db:
+            # TODO: reload aliased_db in case it has changed?
+            next_aliased_entry = db.aliased_db.get_next_in_series()
+
+            media_key = "audio" if is_audio else "video"
+            if next_aliased_entry[media_key] == media_entry[media_key]:  # type: ignore
+                next_aliased_entry["duration"] = formatted_duration
+                aliased_sessions = next_aliased_entry.setdefault("viewings", [])
+                aliased_sessions.append({"start": start, "end": end})
+                aliased_path = media_entry["alias"]
+                db.aliased_db.write_series(aliased_path)
+                print("recorded video in aliased series record:", aliased_path)
 
 
 def print_path_to_media(
@@ -229,17 +303,24 @@ def print_path_to_media(
 
     for path in paths:
         try:
-            video_path, _ = _path_to_media(
+            media_path, _ = _path_to_media(
                 db, path, ignore_errors=ignore_errors, verbose=verbose
             )
-            if not no_extension_filter and not _is_video(video_path):
-                continue
 
-            filename = os.path.basename(video_path)
-            if verbose:
-                logs.append({"path": path, "filename": filename})
+            if _is_spotify(media_path):
+                if verbose:
+                    logs.append({"audio": media_path})
+                else:
+                    logs.append(media_path)
             else:
-                logs.append(filename)
+                if not no_extension_filter and not _is_video(media_path):
+                    continue
+
+                filename = os.path.basename(media_path)
+                if verbose:
+                    logs.append({"path": path, "filename": filename})
+                else:
+                    logs.append(filename)
         except ValueError as e:
             if not ignore_errors:
                 raise e
@@ -255,7 +336,7 @@ def enqueue_media(queue_path, paths, comment=None, prune=False, title=None):
     db = Db()
     db.load_series(queue_path)
     new_entries = []
-    queued_videos = db.get_series_video_set()
+    queue_media = db.get_series_media_set()
 
     if prune:
         db.prune_watched()
@@ -266,20 +347,25 @@ def enqueue_media(queue_path, paths, comment=None, prune=False, title=None):
     if title:
         entry_template["title"] = title
 
-    def add_new_entry(video, alias=None):
+    def add_new_entry(media, alias=None, audio=False):
         # don't allow duplicates
-        if video not in queued_videos:
+        if media not in queue_media:
             entry = entry_template.copy()
-            entry["video"] = video
+            if audio:
+                entry["audio"] = media
+            else:
+                entry["video"] = media
             if alias:
                 entry["alias"] = alias
             new_entries.append(entry)
-            queued_videos.add(video)
+            queue_media.add(media)
             db.add_show_to_series(entry)
 
     for path in paths:
         if _is_url(path) or _is_video(path):
             add_new_entry(path)
+        elif _is_spotify(path):
+            add_new_entry(path, audio=True)
         elif os.path.isdir(path):
             series_db = Db()
             if series_db.load_series(path):
@@ -287,7 +373,7 @@ def enqueue_media(queue_path, paths, comment=None, prune=False, title=None):
                 # first queue episode 1, then episode 2
                 next_entry = series_db.get_next_in_series()
                 if next_entry and "alias" not in next_entry:
-                    add_new_entry(next_entry["video"], path)
+                    add_new_entry(_get_media_path(next_entry), path)
             else:
                 video = _find_candidate_in_directory(path)
                 add_new_entry(video)
@@ -300,21 +386,21 @@ def enqueue_media(queue_path, paths, comment=None, prune=False, title=None):
 def dequeue_media(queue_path, paths):
     db = Db()
     db.load_series(queue_path)
-    videos_set = set()
+    media_set = set()
     alias_set = set()
 
     for path in paths:
-        if _is_url(path) or _is_video(path):
-            videos_set.add(path)
+        if _is_url(path) or _is_video(path) or _is_spotify(path):
+            media_set.add(path)
         elif os.path.isdir(path):
             if Db.path_has_series_db(path):
                 alias_set.add(path)
             else:
                 video = _find_candidate_in_directory(path)
-                videos_set.add(video)
+                media_set.add(video)
 
     db.filter_db(
-        lambda entry: entry["video"] not in videos_set
+        lambda entry: _get_media_path(entry) not in media_set
         and entry.get("alias", None) not in alias_set
     )
     db.write_series(queue_path)
@@ -325,12 +411,12 @@ def grep_media_record(terms, quiet):
     db.load_global_record()
     matches = db.get_matching_entries(
         lambda record: all(
-            re.search(term, record["video"], re.IGNORECASE) for term in terms
+            re.search(term, _get_media_path(record), re.IGNORECASE) for term in terms
         )
     )
 
     if quiet:
-        print("\n".join(list(map(lambda m: m["video"], matches))))
+        print("\n".join(list(map(_get_media_path, matches))))
     else:
         yaml.dump(list(matches), sys.stdout)
 
