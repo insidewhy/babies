@@ -135,7 +135,10 @@ def watch_video(
         print(f"start: {video_path}", flush=True)
 
         formatted_duration = format_duration(duration)
-        print(f"duration: {formatted_duration}", flush=True)
+        print(
+            f"position: {format_duration(start_position)}/{formatted_duration}",
+            flush=True,
+        )
         logger.unsuspend()
 
         if run_before:

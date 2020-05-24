@@ -167,7 +167,7 @@ def listen_to_track(read_input: ReadInput, track_uri: str) -> Tuple[int, str, da
     duration = player.get_duration()
     # floor duration etc. spotify player isn't very accurate
     formatted_duration = format_duration(floor(duration))
-    print(f"duration: {formatted_duration}", flush=True)
+    print(f"position: {format_duration(0)}/{formatted_duration}", flush=True)
 
     player.wait_for_track_to_end()
 
