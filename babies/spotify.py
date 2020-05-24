@@ -18,9 +18,9 @@ PLAYER_URI = "org.mpris.MediaPlayer2.Player"
 
 def search_spotify(config: Config, search_terms: List[str], limit=50, raw=False):
     access_token = config.get_spotify_access_token()
+    config.load()
 
     if not access_token:
-        config.load()
         [client_id, client_secret] = config.get_spotify_client_id_and_secret()
 
         results = requests.post(
@@ -37,7 +37,12 @@ def search_spotify(config: Config, search_terms: List[str], limit=50, raw=False)
 
     results = requests.get(
         "https://api.spotify.com/v1/search",
-        {"q": " ".join(search_terms), "type": "album,artist,track", "limit": limit},
+        {
+            "q": " ".join(search_terms),
+            "type": "album,artist,track",
+            "limit": limit,
+            "market": config.get_spotify_market(),
+        },
         headers={"Authorization": f"Bearer {access_token}"},
     )
 

@@ -5,6 +5,8 @@ from datetime import datetime
 
 from .yaml import load_yaml_file, save_yaml_file
 
+DEFAULT_SPOTIFY_MARKET = "US"
+
 
 def _load_first_data(path: str) -> Optional[str]:
     for path in BaseDirectory.load_data_paths(path):
@@ -17,10 +19,11 @@ class Config:
         self.config = {}
 
     def load(self):
-        config_path = BaseDirectory.load_first_config("babies.yaml")
-        if not config_path:
-            raise ValueError("No configuration found")
-        self.config = load_yaml_file(config_path)
+        if not self.config:
+            config_path = BaseDirectory.load_first_config("babies.yaml")
+            if not config_path:
+                raise ValueError("No configuration found")
+            self.config = load_yaml_file(config_path)
 
     def get_youtube_api_key(self) -> str:
         api_key = self.config.get("youtube-api-key", None)
@@ -60,3 +63,10 @@ class Config:
         if not client_secret:
             raise ValueError("No spotify.client-secret configuration element found")
         return client_id, client_secret
+
+    def get_spotify_market(self) -> Optional[str]:
+        spotify_config = self.config.get("spotify", None)
+        if not spotify_config:
+            return DEFAULT_SPOTIFY_MARKET
+        else:
+            return spotify_config.get("market", DEFAULT_SPOTIFY_MARKET)
