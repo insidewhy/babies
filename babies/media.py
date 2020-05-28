@@ -227,15 +227,14 @@ def _record_session(
     start = format_time_with_duration(start_time, start_position)
     end = format_time_with_duration(end_time, position)
 
-    record: MediaEntry = {
-        "duration": formatted_duration,
-        "start": start,
-        "end": end,
-    }
+    record: MediaEntry = {}
+
     if is_audio:
         record["audio"] = media_log_entry
     else:
         record["video"] = media_log_entry
+
+    record.update({"duration": formatted_duration, "start": start, "end": end})
 
     if comment:
         record["comment"] = comment
