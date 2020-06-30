@@ -39,7 +39,7 @@ def search_spotify(config: Config, search_terms: List[str], limit=50, raw=False)
         "https://api.spotify.com/v1/search",
         {
             "q": " ".join(search_terms),
-            "type": "album,artist,track",
+            "type": "album,artist,track,episode",
             "limit": limit,
             "market": config.get_spotify_market(),
         },
@@ -61,19 +61,32 @@ def _format_spotify_results(results):
     for track in results["tracks"]["items"]:
         artists = list(map(lambda a: a["name"], track["artists"]))
         album = track["album"]
-        output = {
-            "type": "track",
-            "artist": artists[0],
-            "contributors": artists[1:],
-            "album": album["name"],
-            "name": track["name"],
-            "track_number": track["track_number"],
-            "uri": track["uri"],
-            "album_uri": album["uri"],
-        }
-        outputs.append(output)
+        outputs.append(
+            {
+                "type": "track",
+                "artist": artists[0],
+                "contributors": artists[1:],
+                "album": album["name"],
+                "name": track["name"],
+                "track_number": track["track_number"],
+                "uri": track["uri"],
+                "album_uri": album["uri"],
+            }
+        )
 
-    return outputs
+    episodes = []
+    for episode in results["episodes"]["items"]:
+        episodes.append(
+            {
+                "type": "episode",
+                "name": episode["name"],
+                "uri": episode["uri"],
+                "release_date": episode["release_date"],
+            }
+        )
+    episodes.sort(key=lambda x: x["release_date"])
+
+    return outputs + episodes
 
 
 class SpotifyPlayer:
