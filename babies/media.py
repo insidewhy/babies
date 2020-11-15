@@ -24,6 +24,7 @@ SHOW_EXTENSIONS = [
     "m4v",
     "iso",
     "mov",
+    "webm",
 ]
 
 
