@@ -62,7 +62,10 @@ def _wait_for_duration_or_terminate(player):
             done_condition.notify_all()
 
     def wait_for_playback():
-        player.wait_for_playback()
+        try:
+            player.wait_for_playback()
+        except mpv.ShutdownError:
+            pass
         with done_condition:
             done_condition.notify_all()
 
@@ -163,7 +166,10 @@ def watch_video(
         read_input.start(lambda key: player.command("keypress", key))
 
         # wait for video to end
-        player.wait_for_playback()
+        try:
+            player.wait_for_playback()
+        except mpv.ShutdownError:
+            pass
 
     finally:
         read_input.stop()
