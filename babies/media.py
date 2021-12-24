@@ -1,9 +1,9 @@
 import sys
 import os
 import re
-import ffmpeg
 from typing import List, Union, Tuple, Optional
 from datetime import datetime
+from subprocess import check_output
 
 from .formatting import format_duration, format_time_with_duration
 from .videos import watch_video
@@ -73,8 +73,8 @@ def _path_to_media(
     db: Db, path: str, ignore_errors=False, verbose=False
 ) -> Tuple[str, Optional[MediaEntry]]:
     """
-        If path is a directory then load series into db and return next
-        unwatched show else return path to file
+    If path is a directory then load series into db and return next
+    unwatched show else return path to file
     """
     if _is_url(path) or _is_spotify(path):
         return path, None
@@ -110,7 +110,23 @@ def _path_to_media(
 def record_media(path, comment):
     db = Db()
     media_path, media_entry = _path_to_media(db, path)
-    duration = format_duration(float(ffmpeg.probe(media_path)["format"]["duration"]))
+
+    duration = format_duration(
+        float(
+            check_output(
+                [
+                    "ffprobe",
+                    "-v",
+                    "error",
+                    "-show_entries",
+                    "format=duration",
+                    "-of",
+                    "default=noprint_wrappers=1:nokey=1",
+                    media_path,
+                ]
+            )
+        )
+    )
 
     video_filename = _get_media_entry_for_log(media_path)
     start = "unknown at " + format_duration(0)

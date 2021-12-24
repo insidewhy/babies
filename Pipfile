@@ -12,7 +12,6 @@ black = "*"
 
 [packages]
 babies = {editable = true,path = "."}
-ffmpeg-python = "*"
 readchar = "*"
 ruamel-yaml = "*"
 pyxdg = "*"
