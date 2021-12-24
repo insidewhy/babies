@@ -38,7 +38,11 @@ def _is_spotify(path: str) -> bool:
 
 def _get_media_path(media_entry: MediaEntry) -> str:
     video = media_entry.get("video", None)
-    return video or media_entry["audio"]
+    try:
+        return video or media_entry["audio"]
+    except:
+        print("bad entry", media_entry)
+        raise
 
 
 def _get_media_entry_for_log(media_path: str) -> str:
