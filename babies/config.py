@@ -1,6 +1,6 @@
 from os import path
 from xdg import BaseDirectory
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple, TypedDict
 from datetime import datetime
 
 from .yaml import load_yaml_file, save_yaml_file
@@ -12,6 +12,14 @@ def _load_first_data(path: str) -> Optional[str]:
     for path in BaseDirectory.load_data_paths(path):
         return path
     return None
+
+
+class ConfigDisplay(TypedDict):
+    output: str
+    mode: str
+
+
+ConfigDisplays = Dict[str, ConfigDisplay]
 
 
 class Config:
@@ -30,6 +38,9 @@ class Config:
         if not api_key:
             raise ValueError("No youtube-api-key configuration element found")
         return api_key
+
+    def get_displays(self) -> ConfigDisplays:
+        return self.config["displays"]
 
     def get_spotify_access_token(self) -> Optional[str]:
         data_path = _load_first_data("babies.yaml")

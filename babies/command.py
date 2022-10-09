@@ -11,6 +11,7 @@ from .media import (
     grep_media_record,
     create_record_from_directory,
 )
+from .display import get_display
 from .db import Db
 from .youtube import search_youtube
 from .spotify import search_spotify
@@ -141,6 +142,13 @@ def run_babies():
     )
     listen_command.add_argument("tracks", help="tracks to listen to", nargs="+")
 
+    get_display_command = subparsers.add_parser(
+        "get_display", help="get current display", aliases=["gd"]
+    )
+    get_display_command.add_argument(
+        "-v", "--verbose", action="store_true", help="verbose output"
+    )
+
     argv = sys.argv[1:]
     # if the first argument is a file then prepend the "watch" command
     if len(argv) and "." in argv[0]:
@@ -197,6 +205,9 @@ def run_babies():
     elif subcommand == "search_spotify" or subcommand == "ss":
         config = Config()
         search_spotify(config, args.search_terms, limit=args.limit, raw=args.raw)
+    elif subcommand == "get_display" or subcommand == "gd":
+        config = Config()
+        get_display(config, verbose=args.verbose)
     else:
         night_mode = subcommand == "night" or subcommand == "n"
         dry_run = subcommand == "dryrun" or subcommand == "d"

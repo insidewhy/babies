@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "8a6411bb59ce05f00f8318736c10bca16f1bb84edf04e316266a456527f5c69b"
+            "sha256": "7ab111546873c4494c9215187cb7b70ba750ac922d851526179dcefb6d6bc752"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -71,6 +71,14 @@
             "index": "pypi",
             "version": "==0.5.2"
         },
+        "python-xlib": {
+            "hashes": [
+                "sha256:1ec6ce0de73d9e6592ead666779a5732b384e5b8fb1f1886bd0a81cafa477759",
+                "sha256:74d83a081f532bc07f6d7afcd6416ec38403d68f68b9b9dc9e1f28fbf2d799e9"
+            ],
+            "index": "pypi",
+            "version": "==0.31"
+        },
         "pyxdg": {
             "hashes": [
                 "sha256:3267bb3074e934df202af2ee0868575484108581e6f3cb006af1da35395e88b4",
@@ -95,13 +103,12 @@
             "index": "pypi",
             "version": "==2.28.1"
         },
-        "ruamel.yaml": {
+        "ruamel-yaml": {
             "hashes": [
                 "sha256:742b35d3d665023981bd6d16b3d24248ce5df75fdb4e2924e93a05c1f8b61ca7",
                 "sha256:8b7ce697a2f212752a35c1ac414471dc16c424c9573be4926b56ff3f5d23b7af"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3'",
             "version": "==0.17.21"
         },
         "ruamel.yaml.clib": {
@@ -147,6 +154,14 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==65.4.1"
+        },
+        "six": {
+            "hashes": [
+                "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926",
+                "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"
+            ],
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
+            "version": "==1.16.0"
         },
         "urllib3": {
             "hashes": [
