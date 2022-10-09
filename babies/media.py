@@ -40,7 +40,7 @@ def _get_media_path(media_entry: MediaEntry) -> str:
     video = media_entry.get("video", None)
     try:
         return video or media_entry["audio"]
-    except:
+    except Exception:
         print("bad entry", media_entry)
         raise
 
@@ -316,7 +316,11 @@ def _record_session(
 
 
 def print_path_to_media(
-    paths: List[str], ignore_errors=False, verbose=False, no_extension_filter=False
+    paths: List[str],
+    ignore_errors=False,
+    verbose=False,
+    no_extension_filter=False,
+    mtime=False,
 ):
     db = Db()
     logs: List[Union[str, dict]] = []
@@ -338,7 +342,10 @@ def print_path_to_media(
 
                 filename = os.path.basename(media_path)
                 if verbose:
-                    logs.append({"path": path, "filename": filename})
+                    log = {"path": path, "filename": filename}
+                    if mtime:
+                        log["mtime"] = os.path.getmtime(media_path)
+                    logs.append(log)
                 else:
                     logs.append(filename)
         except ValueError as e:

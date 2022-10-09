@@ -101,6 +101,7 @@ def run_babies():
         action="store_true",
         help="do not filter out non-videos",
     )
+    print_cmd.add_argument("-m", "--mtime", action="store_true", help="retrieve mtime")
 
     path_help = "paths to video and/or directory containing series and or/video"
     record = subparsers.add_parser(
@@ -188,6 +189,7 @@ def run_babies():
             ignore_errors=args.ignore_errors,
             verbose=args.verbose,
             no_extension_filter=args.no_extension_filter,
+            mtime=args.mtime,
         )
     elif subcommand == "search_youtube" or subcommand == "syt":
         config = Config()
