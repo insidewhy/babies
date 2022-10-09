@@ -11,7 +11,7 @@ from .media import (
     grep_media_record,
     create_record_from_directory,
 )
-from .display import get_display
+from .display import get_display, set_display
 from .db import Db
 from .youtube import search_youtube
 from .spotify import search_spotify
@@ -149,6 +149,11 @@ def run_babies():
         "-v", "--verbose", action="store_true", help="verbose output"
     )
 
+    set_display_command = subparsers.add_parser(
+        "set_display", help="set current display", aliases=["sd"]
+    )
+    set_display_command.add_argument("display", help="new display name to set", nargs=1)
+
     argv = sys.argv[1:]
     # if the first argument is a file then prepend the "watch" command
     if len(argv) and "." in argv[0]:
@@ -208,6 +213,9 @@ def run_babies():
     elif subcommand == "get_display" or subcommand == "gd":
         config = Config()
         get_display(config, verbose=args.verbose)
+    elif subcommand == "set_display" or subcommand == "sd":
+        config = Config()
+        set_display(config, args.display[0])
     else:
         night_mode = subcommand == "night" or subcommand == "n"
         dry_run = subcommand == "dryrun" or subcommand == "d"
