@@ -1,7 +1,7 @@
 import sys
 import os
 import re
-from typing import List, Union, Tuple, Optional
+from typing import List, Union, Tuple, Optional, Dict
 from datetime import datetime
 from subprocess import check_output
 
@@ -342,10 +342,13 @@ def print_path_to_media(
 
                 filename = os.path.basename(media_path)
                 if verbose:
-                    log = {"path": path, "filename": filename}
+                    new_log: Dict[str, Union[str, float]] = {
+                        "path": path,
+                        "filename": filename,
+                    }
                     if mtime:
-                        log["mtime"] = os.path.getmtime(media_path)
-                    logs.append(log)
+                        new_log["mtime"] = os.path.getmtime(media_path)
+                    logs.append(new_log)
                 else:
                     logs.append(filename)
         except ValueError as e:

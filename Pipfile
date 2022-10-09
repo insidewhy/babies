@@ -9,6 +9,8 @@ jedi = "*"
 flake8 = "*"
 flake8-black = "*"
 black = "*"
+types-requests = "*"
+toml = "*"
 
 [packages]
 babies = {editable = true,path = "."}
@@ -17,6 +19,7 @@ ruamel-yaml = "*"
 pyxdg = "*"
 requests = "*"
 dbus-python = "*"
+python-mpv = "==0.5"
 
 [requires]
 python_version = "3.10"
@@ -27,5 +30,5 @@ allow_prereleases = true
 [scripts]
 check_types = "mypy --check-untyped-defs --ignore-missing-imports babies"
 check_formatting = "black --check ."
-lint = "flake8"
-format = "black ."
+lint = "flake8 babies"
+format = "black babies"
