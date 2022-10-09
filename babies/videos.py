@@ -1,6 +1,5 @@
 import mpv
 import os
-from threading import Thread, Condition
 from datetime import datetime
 from typing import Optional, Tuple
 from dataclasses import dataclass
@@ -44,40 +43,6 @@ def _apply_watch_options(player, video_path) -> Tuple[Optional[str], Optional[st
             player[opt_name] = opt_val
 
     return run_before, run_after
-
-
-def _wait_for_duration_or_terminate(player):
-    done_condition = Condition()
-    data = {}
-
-    # get duration of video
-    def wait_for_duration():
-        def set_duration(x):
-            if x:
-                data["duration"] = x
-                return True
-
-        player.wait_for_property("duration", set_duration, False)
-        with done_condition:
-            done_condition.notify_all()
-
-    def wait_for_playback():
-        try:
-            player.wait_for_playback()
-        except mpv.ShutdownError:
-            pass
-        with done_condition:
-            done_condition.notify_all()
-
-    duration_thread = Thread(target=wait_for_duration)
-    playback_thread = Thread(target=wait_for_playback)
-    duration_thread.daemon = True
-    duration_thread.start()
-    playback_thread.start()
-
-    with done_condition:
-        done_condition.wait()
-        return data.get("duration")
 
 
 def register_pause_handler(player):
@@ -130,9 +95,17 @@ def watch_video(
 
     try:
         player.play(video_path)
-        duration = _wait_for_duration_or_terminate(player)
-        if not duration:
-            return None
+
+        player.wait_until_playing()
+        duration_obj = {}
+
+        def set_duration(x):
+            if x:
+                duration_obj["value"] = x
+                return True
+
+        player.wait_for_property("duration", set_duration, False)
+        duration = duration_obj["value"]
 
         # let the user know what they are watching before any other logs
         print(f"start: {video_path}", flush=True)
