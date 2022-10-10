@@ -14,13 +14,13 @@ class MpvLogger:
 
         if "--sid" in message:
             sub_code = re.sub(".*--sid=(\\d+).*'(.*)'.*", "\\1,\\2", message)
-            if "(*)" in message:
+            if "(+)" in message:
                 print("active-sub:", sub_code)
             else:
                 print("sub:", sub_code)
         elif "--aid" in message:
             aid = re.sub(".*--aid=(\\d+).*--alang=([^\\s]+).*", "\\1,\\2", message)
-            if "(*)" in message:
+            if "(+)" in message:
                 print("active-audio:", aid)
             else:
                 print("audio:", aid)
