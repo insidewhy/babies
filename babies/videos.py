@@ -1,5 +1,6 @@
 import mpv
 import os
+import sys
 from datetime import datetime
 from typing import Optional, Tuple
 from dataclasses import dataclass
@@ -136,7 +137,25 @@ def watch_video(
         )
 
         register_pause_handler(player)
-        read_input.start(lambda key: player.command("keypress", key))
+        if read_input.is_tty:
+            read_input.start(lambda key: player.command("keypress", key))
+        else:
+
+            def read_non_tty_input(line: str):
+                if len(line) == 1:
+                    player.command("keypress", line)
+                elif " " in line:
+                    cmd, param = line.split(" ")
+                    if cmd == "aid":
+                        player["aid"] = param
+                    elif cmd == "sid":
+                        player["sid"] = param
+                    else:
+                        print(f"unrecognised command {cmd}", file=sys.stderr)
+                else:
+                    print(f"unrecognised input '{line}'", file=sys.stderr)
+
+            read_input.start(read_non_tty_input)
 
         # wait for video to end
         try:

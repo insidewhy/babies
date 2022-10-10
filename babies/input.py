@@ -38,6 +38,7 @@ class ReadInput:
         self.__cleanup = None
         self.__handler = None
         self.__keyqueue = []
+        self.is_tty = sys.stdin.isatty()
 
     def start(self, handler: KeyHandler):
         self.__handler = handler
@@ -64,7 +65,7 @@ class ReadInput:
             self.__keyqueue = []
 
     def __read_keypresses(self):
-        if sys.stdin.isatty():
+        if self.is_tty:
             self.__read_keypresses_for_tty()
         else:
             self.__read_keypresses_for_non_tty()
@@ -103,8 +104,7 @@ class ReadInput:
         def readlines():
             while True:
                 line = sys.stdin.readline().strip()
-                for cmd in line.split():
-                    self.__handle_keypress(cmd)
+                self.__handle_keypress(line)
 
         cmd_thread = Thread(target=readlines)
         cmd_thread.daemon = True
