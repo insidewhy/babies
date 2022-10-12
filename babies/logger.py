@@ -13,7 +13,7 @@ class MpvLogger:
             return
 
         if "--sid" in message:
-            sub_code = re.sub(".*--sid=(\\d+).*'(.*)'.*", "\\1,\\2", message)
+            sub_code = re.sub(".*--sid=(\\d+).*?(?:'(.*)'|\(([^*].*)\)).*", "\\1,\\2\\3", message)
             if "(+)" in message:
                 print("active-sub:", sub_code, flush=True)
             else:
