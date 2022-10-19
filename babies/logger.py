@@ -21,11 +21,19 @@ class MpvLogger:
             else:
                 print("sub:", sub_code)
         elif "--aid" in message:
-            aid = re.sub(r".*--aid=(\d+).*--alang=([^\s]+).*", "\\1,\\2", message)
-            if "(+)" in message:
-                print("active-audio:", aid, flush=True)
+            active = "(+)" in message
+            if "--alang" in message:
+                aid = re.sub(r".*--aid=(\d+).*--alang=([^\s]+).*", "\\1,\\2", message)
+                if active:
+                    print("active-audio:", aid, flush=True)
+                else:
+                    print("audio:", aid)
             else:
-                print("audio:", aid)
+                aid = re.sub(r".*--aid=(\d+).*", "\\1,unknown", message)
+                if active:
+                    print("active-audio:", aid, flush=True)
+                else:
+                    print("audio:", aid)
         else:
             formatted_message = "[{}] {}: {}".format(log_level, component, message)
             is_error = log_level == "error"
