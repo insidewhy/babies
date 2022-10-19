@@ -58,6 +58,19 @@ def register_pause_handler(player):
     player.observe_property("pause", pause_handler)
 
 
+def __log_position_events(player: mpv.MPV) -> None:
+    last_pos = {"value": 0}
+
+    @player.property_observer("time-pos")
+    def time_observer(_name, value):
+        if value is not None:
+            rounded = round(value)
+            diff = rounded - last_pos["value"]
+            if abs(diff) >= 1:
+                print("pos:", rounded, flush=True)
+                last_pos["value"] = value
+
+
 def watch_video(
     read_input: ReadInput,
     path: str,
@@ -93,15 +106,7 @@ def watch_video(
         player.quit()
 
     if position_events:
-        last_pos = {"value": 0}
-
-        @player.property_observer("time-pos")
-        def time_observer(_name, value):
-            if value is not None:
-                diff = value - last_pos["value"]
-                if abs(diff) > 0.8:
-                    print("pos: {:.2f}".format(value), flush=True)
-                    last_pos["value"] = value
+        __log_position_events(player)
 
     run_before, run_after = _apply_watch_options(player, video_path)
     formatted_duration = None
