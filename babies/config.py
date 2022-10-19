@@ -40,7 +40,7 @@ class Config:
         return api_key
 
     def get_displays(self) -> ConfigDisplays:
-        return self.config["displays"]
+        return self.config.get("displays", {})
 
     def get_spotify_access_token(self) -> Optional[str]:
         data_path = _load_first_data("babies.yaml")
