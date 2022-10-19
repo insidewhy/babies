@@ -66,6 +66,9 @@ def run_babies():
     watch.add_argument("-s", "--sub-file", help="subtitle file")
     watch.add_argument("-c", "--comment", help="comment to record with video(s)")
     watch.add_argument("-t", "--title", help="title to record with video(s)")
+    watch.add_argument(
+        "-p", "--position-events", action="store_true", help="log position events"
+    )
 
     enqueue = subparsers.add_parser("enqueue", help="enqueue shows", aliases=["e"])
     enqueue.add_argument("queue_path", help="directory to story queue in")
@@ -229,6 +232,7 @@ def run_babies():
                     sub_file=args.sub_file,
                     comment=args.comment,
                     title=args.title,
+                    position_events=args.position_events,
                 )
 
     read_input.destroy()

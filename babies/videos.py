@@ -66,6 +66,7 @@ def watch_video(
     start_position: int,
     night_mode=False,
     sub_file=None,
+    position_events=False,
 ) -> Optional[Tuple[int, str, datetime]]:
     logger = MpvLogger()
     player = mpv.MPV(
@@ -90,6 +91,17 @@ def watch_video(
     def quit_binding():
         session.position = player.time_pos
         player.quit()
+
+    if position_events:
+        last_pos = {"value": 0}
+
+        @player.property_observer("time-pos")
+        def time_observer(_name, value):
+            if value is not None:
+                diff = value - last_pos["value"]
+                if abs(diff) > 0.8:
+                    print("pos: {:.2f}".format(value), flush=True)
+                    last_pos["value"] = value
 
     run_before, run_after = _apply_watch_options(player, video_path)
     formatted_duration = None

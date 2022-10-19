@@ -163,6 +163,7 @@ def play_media(
     sub_file=None,
     comment=None,
     title=None,
+    position_events=False,
 ):
     if _is_spotify(uri):
         listen_to_track(read_input, uri)
@@ -210,6 +211,7 @@ def play_media(
                 start_position,
                 night_mode=night_mode,
                 sub_file=sub_file,
+                position_events=position_events,
             )
 
             if watch_status and not dont_record:
