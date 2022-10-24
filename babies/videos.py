@@ -167,6 +167,8 @@ def watch_video(
                         player["aid"] = param
                     elif cmd == "sid":
                         player["sid"] = param
+                    elif cmd == "seek":
+                        player.seek(float(param))
                     else:
                         print(f"unrecognised command {cmd}", file=sys.stderr)
                 else:
