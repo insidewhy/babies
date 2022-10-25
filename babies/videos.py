@@ -141,7 +141,7 @@ def watch_video(
         session.duration = duration
         # once the duration has been read it seems to be safe to seek
         if start_position > 0:
-            player.seek(start_position)
+            player.seek(start_position, "absolute", "exact")
 
         player.show_text(
             display_video
@@ -168,7 +168,7 @@ def watch_video(
                     elif cmd == "sid":
                         player["sid"] = param
                     elif cmd == "seek":
-                        player.seek(float(param))
+                        player.seek(float(param), "absolute", "exact")
                     else:
                         print(f"unrecognised command {cmd}", file=sys.stderr)
                 else:
