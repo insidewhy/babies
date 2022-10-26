@@ -144,23 +144,42 @@ class SpotifyPlayer:
                 await asyncio.sleep(0.05)
 
     async def wait_for_track_to_end(self):
-        # TODO: use events instead
-        playback_status = "Playing"
-        while True:
-            metadata = await self.__get_metadata()
-            if metadata["mpris:trackid"].value != self.__mpris_trackid:
-                break
-            else:
-                new_playback_status = await self.__get_playback_status()
-                if new_playback_status != playback_status:
-                    if new_playback_status == "Paused":
-                        print("pause: paused", flush=True)
-                    elif new_playback_status == "Playing":
-                        print("pause: resumed", flush=True)
-                    else:
+        loop = asyncio.get_event_loop()
+        fut = loop.create_future()
+
+        def on_properties_changed(_, changed, invalidated):
+            for changed, variant in changed.items():
+                print(changed)
+                if changed == "Metadata":
+                    track_id = variant.value["mpris:trackid"].value
+                    if track_id != self.__mpris_trackid:
+                        fut.set_result(None)
                         break
-                    playback_status = new_playback_status
-                await asyncio.sleep(0.1)
+                elif changed == "PlaybackStatus":
+                    print("playback status", variant.value)
+
+        # see https://github.com/altdesktop/python-dbus-next/issues/136
+        self.properties.on_properties_changed(on_properties_changed)
+
+        return await fut
+
+        # TODO: use events instead
+        # playback_status = "Playing"
+        # while True:
+        #     metadata = await self.__get_metadata()
+        #     if metadata["mpris:trackid"].value != self.__mpris_trackid:
+        #         break
+        #     else:
+        #         new_playback_status = await self.__get_playback_status()
+        #         if new_playback_status != playback_status:
+        #             if new_playback_status == "Paused":
+        #                 print("pause: paused", flush=True)
+        #             elif new_playback_status == "Playing":
+        #                 print("pause: resumed", flush=True)
+        #             else:
+        #                 break
+        #             playback_status = new_playback_status
+        #         await asyncio.sleep(0.1)
 
     async def get_position(self):
         return await self.player.get_position()
@@ -183,7 +202,7 @@ async def handle_keypress(key: str):
 async def __listen_to_track_helper(
     read_input: ReadInput, track_uri: str
 ) -> Tuple[int, str, datetime]:
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     global player
     if not player:
@@ -200,7 +219,6 @@ async def __listen_to_track_helper(
     print(f"start: {track_uri}", flush=True)
 
     duration = await player.get_duration()
-    # floor duration etc. spotify player isn't very accurate
     formatted_duration = format_duration(duration / 1_000_000)
     print(f"position: {format_duration(0)}/{formatted_duration}", flush=True)
 
