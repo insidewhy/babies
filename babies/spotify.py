@@ -106,10 +106,17 @@ class SpotifyPlayer:
         with self.bus_lock:
             self.player.OpenUri(uri)
         self.playing = uri
+        self.__mpris_trackid = "/com/" + uri.replace(":", "/")
 
     def stop(self):
         with self.bus_lock:
+            # Stop alone pauses the track, so go Next first then Stop, annoying
+            self.player.Next()
             self.player.Stop()
+
+    def toggle_pause(self):
+        with self.bus_lock:
+            self.player.PlayPause()
 
     def __get_metadata(self):
         with self.bus_lock:
@@ -123,7 +130,7 @@ class SpotifyPlayer:
         while True:
             metadata = self.__get_metadata()
             if (
-                str(metadata["mpris:trackid"]) == self.playing
+                str(metadata["mpris:trackid"]) == self.__mpris_trackid
                 and self.__get_playback_status() == "Playing"
             ):
                 break
@@ -133,7 +140,7 @@ class SpotifyPlayer:
     def get_duration(self):
         while True:
             metadata = self.__get_metadata()
-            length = metadata["mpris:length"] / 1000000
+            length = metadata["mpris:length"]
             if length > 0:
                 return length
             else:
@@ -142,15 +149,27 @@ class SpotifyPlayer:
                 time.sleep(0.05)
 
     def wait_for_track_to_end(self):
+        # TODO: use events instead
+        playback_status = "Playing"
         while True:
             metadata = self.__get_metadata()
-            if (
-                str(metadata["mpris:trackid"]) != self.playing
-                or self.__get_playback_status() != "Playing"
-            ):
+            if str(metadata["mpris:trackid"]) != self.__mpris_trackid:
                 break
             else:
+                new_playback_status = self.__get_playback_status()
+                if new_playback_status != playback_status:
+                    if new_playback_status == "Paused":
+                        print("pause: paused", flush=True)
+                    elif new_playback_status == "Playing":
+                        print("pause: resumed", flush=True)
+                    else:
+                        break
+                    playback_status = new_playback_status
                 time.sleep(0.1)
+
+    def get_position(self):
+        with self.bus_lock:
+            return self.properties.Get(PLAYER_URI, "Position")
 
 
 player: Optional[SpotifyPlayer] = None
@@ -163,6 +182,8 @@ def handle_keypress(key: str):
 
     if key == "q":
         player.stop()
+    elif key == " ":
+        player.toggle_pause()
 
 
 def listen_to_track(read_input: ReadInput, track_uri: str) -> Tuple[int, str, datetime]:
@@ -174,26 +195,23 @@ def listen_to_track(read_input: ReadInput, track_uri: str) -> Tuple[int, str, da
 
     player.play_track(track_uri)
     player.wait_for_track_to_start()
-    start_at = datetime.now()
     print(f"start: {track_uri}", flush=True)
 
     duration = player.get_duration()
     # floor duration etc. spotify player isn't very accurate
-    formatted_duration = format_duration(floor(duration))
+    formatted_duration = format_duration(duration / 1_000_000)
     print(f"position: {format_duration(0)}/{formatted_duration}", flush=True)
 
     player.wait_for_track_to_end()
+    # spotify automatically transitions to the next track
+    player.stop()
 
-    # spotify always returns 0 for the dbus position method so have to estimate it
-    position = min(duration, floor((datetime.now() - start_at).total_seconds()))
-
-    # spotify client reports the song ends 1-3 seconds before it does
-    seconds_from_end = duration - position
-    if seconds_from_end <= 3:
-        time.sleep(seconds_from_end)
+    position = player.get_position()
+    # another hack
+    if position < 2_000_000:
         position = duration
 
-    print(f"end: {format_duration(floor(position))}/{formatted_duration}")
+    print(f"end: {format_duration(position / 1_000_000)}/{formatted_duration}")
     read_input.stop()
 
     return floor(position), formatted_duration, datetime.now()
