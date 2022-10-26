@@ -1,19 +1,16 @@
 import sys
 from math import floor
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Any
 from datetime import datetime, timedelta
-from threading import Lock
 import requests
 from requests.auth import HTTPBasicAuth
-import dbus
-import time
+from dbus_next.aio import MessageBus
+import asyncio
 
 from .config import Config
 from .input import ReadInput
 from .yaml import yaml
 from .formatting import format_duration
-
-PLAYER_URI = "org.mpris.MediaPlayer2.Player"
 
 
 def search_spotify(config: Config, search_terms: List[str], limit=50, raw=False):
@@ -91,72 +88,70 @@ def _format_spotify_results(results):
 
 class SpotifyPlayer:
     def __init__(self):
-        bus = dbus.SessionBus()
-        proxy = bus.get_object(
+        pass
+
+    async def start(self):
+        bus = await MessageBus().connect()
+        introspection = await bus.introspect(
             "org.mpris.MediaPlayer2.spotify", "/org/mpris/MediaPlayer2"
         )
-        self.player = dbus.Interface(proxy, dbus_interface=PLAYER_URI)
-        self.properties = dbus.Interface(
-            proxy, dbus_interface="org.freedesktop.DBus.Properties"
+        proxy = bus.get_proxy_object(
+            "org.mpris.MediaPlayer2.spotify", "/org/mpris/MediaPlayer2", introspection
         )
+        self.player: Any = proxy.get_interface("org.mpris.MediaPlayer2.Player")
+        self.properties = proxy.get_interface("org.freedesktop.DBus.Properties")
         self.playing = None
-        self.bus_lock = Lock()
 
-    def play_track(self, uri: str):
-        with self.bus_lock:
-            self.player.OpenUri(uri)
+    async def play_track(self, uri: str):
+        await self.player.call_open_uri(uri)
         self.playing = uri
         self.__mpris_trackid = "/com/" + uri.replace(":", "/")
 
-    def stop(self):
-        with self.bus_lock:
-            # Stop alone pauses the track, so go Next first then Stop, annoying
-            self.player.Next()
-            self.player.Stop()
+    async def stop(self):
+        # Stop alone pauses the track, so go Next first then Stop, annoying
+        await self.player.call_next()
+        await self.player.call_stop()
 
-    def toggle_pause(self):
-        with self.bus_lock:
-            self.player.PlayPause()
+    async def toggle_pause(self):
+        await self.player.call_play_pause()
 
-    def __get_metadata(self):
-        with self.bus_lock:
-            return self.properties.Get(PLAYER_URI, "Metadata")
+    async def __get_metadata(self):
+        return await self.player.get_metadata()
 
-    def __get_playback_status(self):
-        with self.bus_lock:
-            return str(self.properties.Get(PLAYER_URI, "PlaybackStatus"))
+    async def __get_playback_status(self):
+        return await self.player.get_playback_status()
 
-    def wait_for_track_to_start(self):
+    async def wait_for_track_to_start(self):
         while True:
-            metadata = self.__get_metadata()
+            metadata = await self.__get_metadata()
             if (
-                str(metadata["mpris:trackid"]) == self.__mpris_trackid
-                and self.__get_playback_status() == "Playing"
+                metadata["mpris:trackid"].value == self.__mpris_trackid
+                and await self.__get_playback_status() == "Playing"
             ):
                 break
             else:
-                time.sleep(0.05)
+                await asyncio.sleep(0.05)
 
-    def get_duration(self):
+    async def get_duration(self):
         while True:
-            metadata = self.__get_metadata()
-            length = metadata["mpris:length"]
+            metadata = await self.__get_metadata()
+            length = metadata["mpris:length"].value
             if length > 0:
                 return length
             else:
                 # sometimes it takes a while after the track has started for
                 # the duration to be available
-                time.sleep(0.05)
+                await asyncio.sleep(0.05)
 
-    def wait_for_track_to_end(self):
+    async def wait_for_track_to_end(self):
         # TODO: use events instead
         playback_status = "Playing"
         while True:
-            metadata = self.__get_metadata()
-            if str(metadata["mpris:trackid"]) != self.__mpris_trackid:
+            metadata = await self.__get_metadata()
+            if metadata["mpris:trackid"].value != self.__mpris_trackid:
                 break
             else:
-                new_playback_status = self.__get_playback_status()
+                new_playback_status = await self.__get_playback_status()
                 if new_playback_status != playback_status:
                     if new_playback_status == "Paused":
                         print("pause: paused", flush=True)
@@ -165,48 +160,55 @@ class SpotifyPlayer:
                     else:
                         break
                     playback_status = new_playback_status
-                time.sleep(0.1)
+                await asyncio.sleep(0.1)
 
-    def get_position(self):
-        with self.bus_lock:
-            return self.properties.Get(PLAYER_URI, "Position")
+    async def get_position(self):
+        return await self.player.get_position()
 
 
 player: Optional[SpotifyPlayer] = None
 
 
-def handle_keypress(key: str):
+async def handle_keypress(key: str):
     global player
     if not player:
         return
 
     if key == "q":
-        player.stop()
+        await player.stop()
     elif key == " ":
-        player.toggle_pause()
+        await player.toggle_pause()
 
 
-def listen_to_track(read_input: ReadInput, track_uri: str) -> Tuple[int, str, datetime]:
+async def __listen_to_track_helper(
+    read_input: ReadInput, track_uri: str
+) -> Tuple[int, str, datetime]:
+    loop = asyncio.get_event_loop()
+
     global player
     if not player:
         player = SpotifyPlayer()
+        await player.start()
 
-    read_input.start(handle_keypress)
+    def handle_keypress_helper(key: str) -> None:
+        loop.create_task(handle_keypress(key))
 
-    player.play_track(track_uri)
-    player.wait_for_track_to_start()
+    read_input.start(handle_keypress_helper)
+
+    await player.play_track(track_uri)
+    await player.wait_for_track_to_start()
     print(f"start: {track_uri}", flush=True)
 
-    duration = player.get_duration()
+    duration = await player.get_duration()
     # floor duration etc. spotify player isn't very accurate
     formatted_duration = format_duration(duration / 1_000_000)
     print(f"position: {format_duration(0)}/{formatted_duration}", flush=True)
 
-    player.wait_for_track_to_end()
+    await player.wait_for_track_to_end()
     # spotify automatically transitions to the next track
-    player.stop()
+    await player.stop()
 
-    position = player.get_position()
+    position = await player.get_position()
     # another hack
     if position < 2_000_000:
         position = duration
@@ -215,3 +217,10 @@ def listen_to_track(read_input: ReadInput, track_uri: str) -> Tuple[int, str, da
     read_input.stop()
 
     return floor(position), formatted_duration, datetime.now()
+
+
+def listen_to_track(read_input: ReadInput, track_uri: str) -> Tuple[int, str, datetime]:
+    loop = asyncio.get_event_loop()
+    ret = loop.run_until_complete(__listen_to_track_helper(read_input, track_uri))
+    loop.close()
+    return ret
