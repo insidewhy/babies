@@ -151,6 +151,7 @@ def watch_video(
             + formatted_duration
             + ")",
             2000,
+            1
         )
 
         register_pause_handler(player)

@@ -18,7 +18,7 @@ readchar = "*"
 ruamel-yaml = "*"
 pyxdg = "*"
 requests = "*"
-python-mpv = "<0.6"
+python-mpv = "*"
 python-xlib = "*"
 dbus-next = "*"
 
