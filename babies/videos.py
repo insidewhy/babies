@@ -103,7 +103,7 @@ def watch_video(
     @player.on_key_press("q")
     def quit_binding():
         session.position = player.time_pos
-        player.quit()
+        player.quit(0)
 
     if position_events:
         __log_position_events(player)
