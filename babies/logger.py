@@ -12,6 +12,7 @@ class MpvLogger:
         if component == "cplayer" and not message:
             return
 
+        message = message.strip()
         if "--sid" in message:
             sub_code = re.sub(
                 r".*--sid=(\d+).*(?:'(.*)'|--slang=(\S+)).*", "\\1,\\2\\3", message
