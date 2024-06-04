@@ -2,7 +2,7 @@ import mpv
 import os
 import sys
 from datetime import datetime
-from typing import Optional, Tuple
+from typing import Optional
 from dataclasses import dataclass
 
 from .yaml import load_yaml_file
@@ -19,7 +19,7 @@ class Session:
     position: Optional[float]
 
 
-def _apply_watch_options(player, video_path) -> Tuple[Optional[str], Optional[str]]:
+def _apply_watch_options(player, video_path) -> tuple[Optional[str], Optional[str]]:
     run_before = None
     run_after = None
 
@@ -80,7 +80,7 @@ def watch_video(
     night_mode=False,
     sub_file=None,
     position_events=False,
-) -> Optional[Tuple[int, str, datetime]]:
+) -> Optional[tuple[float | int | None, str, datetime]]:
     logger = MpvLogger()
     player = mpv.MPV(
         log_handler=logger,
@@ -151,7 +151,7 @@ def watch_video(
             + formatted_duration
             + ")",
             2000,
-            1
+            1,
         )
 
         register_pause_handler(player)

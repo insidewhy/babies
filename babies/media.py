@@ -174,6 +174,7 @@ def play_media(
 
         start_time = datetime.now()
         start_position = 0
+        position: float | int | None = None
 
         if _is_spotify(media_path):
             position, formatted_duration, end_time = listen_to_track(
@@ -217,19 +218,20 @@ def play_media(
             if watch_status and not dont_record:
                 position, formatted_duration, end_time = watch_status
 
-                _record_session(
-                    db,
-                    media_entry,
-                    uri,
-                    media_log_entry,
-                    start_time,
-                    start_position,
-                    end_time,
-                    position,
-                    formatted_duration,
-                    comment=comment,
-                    title=title,
-                )
+                if position is not None:
+                    _record_session(
+                        db,
+                        media_entry,
+                        uri,
+                        media_log_entry,
+                        start_time,
+                        start_position,
+                        end_time,
+                        position,
+                        formatted_duration,
+                        comment=comment,
+                        title=title,
+                    )
 
 
 def _record_session(
@@ -240,7 +242,7 @@ def _record_session(
     start_time: datetime,
     start_position: int,
     end_time: datetime,
-    position: int,
+    position: float | int,
     formatted_duration: str,
     comment=None,
     title=None,

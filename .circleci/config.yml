@@ -2,28 +2,28 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.10
+      - image: cimg/python:3.12
     working_directory: ~/repo
     steps:
       - run:
           name: install dbus library
-          command: sudo apt-get install libdbus-1-dev
+          command: sudo apt-get update && sudo apt-get install libdbus-1-dev
       - checkout
       - restore_cache:
-          key: v1-dependencies-{{ checksum "Pipfile.lock" }}
+          key: v1-dependencies-{{ checksum "poetry.lock" }}
       - run:
           name: install dependencies
-          command: pipenv install -d
+          command: poetry install
       - save_cache:
           paths:
             - ~/.local/share/virtualenvs
-          key: v1-dependencies-{{ checksum "Pipfile.lock" }}
+          key: v1-dependencies-{{ checksum "poetry.lock" }}
       - run:
           name: check types
-          command: pipenv run check_types
+          command: make check-types
       - run:
           name: check formatting
-          command: pipenv run check_formatting
+          command: make check-formatting
       - run:
           name: check linting
-          command: pipenv run lint
+          command: make lint
