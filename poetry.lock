@@ -365,13 +365,13 @@ files = [
 
 [[package]]
 name = "python-mpv"
-version = "1.0.6"
+version = "1.0.7"
 description = "A python interface to the mpv media player"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 files = [
-    {file = "python_mpv-1.0.6-py3-none-any.whl", hash = "sha256:cdb3801ba122b28f37f3a019f265ee793500cd43b1d531c0ac1b7cb644d0c62a"},
-    {file = "python_mpv-1.0.6.tar.gz", hash = "sha256:77e926f2ce569c5fc83d6531176e85e4c3249552f3059e818afb2f9cb33b9eeb"},
+    {file = "python_mpv-1.0.7-py3-none-any.whl", hash = "sha256:8546838b16abe6dc643832dabb84c4814c03f44cfb1d7f7dfda26ff79b9be236"},
+    {file = "python_mpv-1.0.7.tar.gz", hash = "sha256:afc2f2677b08dcccf1e9e7a76d64ee4f603541cf6a750ebf4cce957be90ec836"},
 ]
 
 [package.extras]
