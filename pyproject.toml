@@ -17,7 +17,7 @@ python-xlib = "^0.33"
 dbus-next = "^0.2.3"
 
 [tool.poetry.group.dev.dependencies]
-mypy = "^1.10.0"
+mypy = "^2.0.0"
 flake8 = "^7.0.0"
 flake8-black = "^0.3.6"
 black = "^24.4.2"
